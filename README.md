@@ -2,17 +2,17 @@
 
 ---
 
-### ✅ `Flexel
+### Flexel
 
 ```markdown
 
 This project is a **Flask-based web application** that allows users to view and interact with Google Sheets using traditional input, voice commands, and hand gestures (via webcam). It combines:
 
-- ✅ Handsontable for dynamic spreadsheet rendering
-- ✅ Voice input using Web Speech API + OpenAI Whisper API
-- ✅ Hand gesture recognition using MediaPipe Hands
-- ✅ Modular gesture control (17+ gestures supported)
-- ✅ Google OAuth integration for authorized saving
+ ✅ Handsontable for dynamic spreadsheet rendering
+ ✅ Voice input using Web Speech API + OpenAI Whisper API
+ ✅ Hand gesture recognition using MediaPipe Hands
+ ✅ Modular gesture control (17+ gestures supported)
+ ✅ Google OAuth integration for authorized saving
 
 ---
 
@@ -21,19 +21,33 @@ This project is a **Flask-based web application** that allows users to view and 
 ```
 
 ├── app.py                     # Flask backend
+
 ├── templates/
+
 │   ├── index.html             # Home page for pasting Google Sheet URL
+
 │   └── view\.html              # Sheet viewer with gesture + voice UI
+
 ├── static/
+
 │   └── js/
+
 │       ├── gestureController.js
+
 │       ├── gestureHighlight\_debug.js
+
 │       ├── pinchSelect.js
+
 │       ├── voicechat.js
+
 │       └── ... (more gestures)
+
 ├── rebuild.json               # OAuth client secrets
+
 ├── .env                       # API keys and Flask secret
+
 └── README.md                  # You're here
+
 
 ````
 
