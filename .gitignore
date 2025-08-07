@@ -1,3 +1,4 @@
-# Ignore secret and config files
 .env
 rebuild.json
+rebuild.json.bak
+*.log
