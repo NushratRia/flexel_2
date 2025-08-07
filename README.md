@@ -2,10 +2,9 @@
 
 ---
 
-### ✅ `README.md`
+### ✅ `Flexel
 
 ```markdown
-# ✨ Flexel
 
 This project is a **Flask-based web application** that allows users to view and interact with Google Sheets using traditional input, voice commands, and hand gestures (via webcam). It combines:
 
