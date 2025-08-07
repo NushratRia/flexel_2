@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Spreadsheet Viewer</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/handsontable@14.0.0/dist/handsontable.min.css">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #fff;
+      font-family: "Roboto", sans-serif;
+    }
+
+    .sheet-container {
+      width: 100%;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+      box-sizing: border-box;
+    }
+
+    .sheet-toolbar {
+      height: 50px;
+      display: flex;
+      align-items: center;
+      font-size: 20px;
+      font-weight: bold; 
+      color: #333;
+      padding: 0 16px;
+      border-bottom: 1px solid #ddd;
+      background: #f8f9fa;
+    }
+
+    #hot {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      z-index: 0;
+    }
+
+    .menu-bar {
+      position: relative;
+      display: flex;
+      gap: 20px;
+      padding: 8px 16px;
+      background-color: #f1f3f4;
+      border-bottom: 1px solid #ccc;
+      font-size: 14px;
+      font-weight: 500;
+      color: #222;
+      user-select: none;
+      z-index: 9999;
+    }
+
+    .menu-bar .menu-item {
+      position: relative;
+      cursor: pointer;
+    }
+
+    .menu-bar .menu-item:hover .dropdown {
+      display: block;
+    }
+
+    .dropdown {
+      display: none;
+      position: absolute;
+      top: 100%;
+      left: 0;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      min-width: 150px;
+      z-index: 10000;
+    }
+
+    .dropdown div {
+      padding: 8px 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .dropdown div:hover {
+      background: #f0f0f0;
+    }
+
+
+
+    .login-banner {
+      background-color: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffeeba;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-weight: 500;
+      margin-bottom: 10px;
+      border-radius: 6px;
+    }
+    .login-banner a {
+      color: #004085;
+      text-decoration: underline;
+      margin-left: 8px;
+    }
+    .login-banner a:hover {
+      text-decoration: none;
+    }
+
+
+
+
+
+
+    .control-panel {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background-color: rgba(255, 255, 255, 0.7);
+      padding: 6px 10px;
+      border-radius: 8px;
+      min-width: 120px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      cursor: move;
+        
+    }
+
+    .control-panel button {
+      padding: 0px;
+      width: 28px;
+      height: 28px;
+      font-size: 16px;
+      cursor: pointer;
+      border: none;
+      background-color: transparent;
+      color: white;
+      border-radius: 4px;
+    }
+
+    .control-panel input[type="range"] {
+      width: 100px;
+    }
+
+    .control-panel select {
+      padding: 4px;
+      font-size: 0.85rem;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+
+
+
+    
+
+  </style>
+</head>
+<body>
+
+<div class="sheet-container">
+  <div class="sheet-toolbar">
+    🗂 <div id="editableTitle" contenteditable="true">{{ sheet_name }}</div>
+  </div>
+
+
+
+  <div class="menu-bar">
+    <div class="menu-item">File
+      <div class="dropdown">
+        <div onclick="menuAction('New')">New</div>
+        <div onclick="menuAction('Open')">Open</div>
+        <div onclick="menuAction('Download')">Download as CSV</div>
+      </div>
+    </div>
+
+    <div class="menu-item">Edit
+      <div class="dropdown">
+        <div onclick="menuAction('Undo')">Undo</div>
+        <div onclick="menuAction('Redo')">Redo</div>
+        <div onclick="menuAction('Clear')">Clear Cell</div>
+      </div>
+    </div>
+
+    <div class="menu-item">View
+      <div class="dropdown">
+        <div onclick="menuAction('Freeze Row')">Freeze Row</div>
+        <div onclick="menuAction('Gridlines')">Toggle Gridlines</div>
+      </div>
+    </div>
+
+    <div class="menu-item">Insert
+      <div class="dropdown">
+        <div onclick="menuAction('Insert Row')">Insert Row</div>
+        <div onclick="menuAction('Insert Column')">Insert Column</div>
+      </div>
+    </div>
+
+    <div class="menu-item">Format
+      <div class="dropdown">
+        <div onclick="menuAction('Bold')">Bold</div>
+        <div onclick="menuAction('Italic')">Italic</div>
+      </div>
+    </div>
+
+    <div class="menu-item">Data
+      <div class="dropdown">
+        <div onclick="menuAction('Sort Ascending')">Sort Ascending</div>
+        <div onclick="menuAction('Sort Descending')">Sort Descending</div>
+      </div>
+    </div>
+
+    <div class="menu-item">Tools
+      <div class="dropdown">
+        <div onclick="menuAction('Spell Check')">Spell Check</div>
+        <div onclick="menuAction('Protect Sheet')">Protect Sheet</div>
+      </div>
+    </div>
+
+    <div class="menu-item">Extensions
+      <div class="dropdown">
+        <div onclick="menuAction('Add-ons')">Add-ons</div>
+      </div>
+    </div>
+
+    <div class="menu-item">Help
+      <div class="dropdown">
+        <div onclick="menuAction('Docs')">Docs</div>
+        <div onclick="menuAction('Send Feedback')">Send Feedback</div>
+      </div>
+    </div>
+  </div>
+  <div class="login-banner" id="autosaveBanner">
+    🔒 <strong>Autosave is disabled.</strong>
+    <a href="{{ url_for('authorize') }}">Sign in with Google</a> to enable syncing.
+  </div>
+
+
+  <div id="hot"></div>
+
+
+
+
+
+  <div class="control-panel" id="controlPanel">
+        <div style="display: flex; flex-direction: column; gap: 6px;">
+            
+            <!-- First row: Button + Slider -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+            <button id="actionButton" title="Click" style="width: 28px; height: 28px; font-size: 16px;">🔆</button>
+            <input type="range" id="opacitySlider" min="0" max="1" step="0.01" value="0.2" title="Adjust Opacity" style="flex: 1;">
+            </div>
+
+            <!-- Second row: Mode  + Dropdown -->
+            <div style="display: flex; align-items: center; gap: 6px;">
+            <label for="modeSelector" style="font-size: 12px;">Mode:</label>
+            <select id="modeSelector" title="Select Mode" style="font-size: 12px; padding: 2px 4px;">
+                <option value="combination">Combination</option>
+                <option value="wimp">WIMP</option>
+                <option value="gesture">Gesture</option>
+                <option value="voice">Voice</option>
+                
+            </select>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/handsontable@14.0.0/dist/handsontable.min.js"></script>
+
+
+<script>
+  const titleDiv = document.getElementById('editableTitle');
+
+  titleDiv.addEventListener('focus', () => {
+    titleDiv.style.outline = '1px dashed #888';
+  });
+
+  titleDiv.addEventListener('blur', () => {
+    titleDiv.style.outline = 'none';
+    console.log("Updated sheet name:", titleDiv.innerText.trim());
+    // Optionally send to backend with fetch() or save locally
+  });
+
+
+  // Excel-style column labels
+  function getExcelColumnLabel(index) {
+    let label = '';
+    while (index >= 0) {
+      label = String.fromCharCode((index % 26) + 65) + label;
+      index = Math.floor(index / 26) - 1;
+    }
+    return label;
+  }
+
+  const originalHeaders = {{ headers|tojson }};
+  const originalData = {{ data|tojson }};
+
+  // Combine header row with data (row 1 is your actual headers)
+  const allRows = [originalHeaders, ...originalData];
+
+  // Add 20 extra rows
+  const totalRows = allRows.length + 20;
+  const totalCols = Math.max(originalHeaders.length + 10, 26);
+
+  const fullData = Array.from({ length: totalRows }, (_, r) =>
+    Array.from({ length: totalCols }, (_, c) =>
+      (allRows[r] && allRows[r][c]) ? allRows[r][c] : ''
+    )
+  );
+
+  const colHeaders = Array.from({ length: totalCols }, (_, i) => getExcelColumnLabel(i));
+
+  const container = document.getElementById('hot');
+  const hot = new Handsontable(container, {
+    data: fullData,
+    colHeaders: colHeaders,
+    rowHeaders: true,
+    licenseKey: 'non-commercial-and-evaluation',
+    filters: true,
+    dropdownMenu: true,
+    contextMenu: true,
+    manualColumnResize: true,
+    manualRowResize: true,
+    rowHeights: 60,
+    colWidths: 120,
+    height: '100%',
+    width: '100%',
+    stretchH: 'all',
+    autoWrapRow: true,
+    autoWrapCol: true,
+    fixedRowsTop: 1  // Freeze the first row (your original headers)
+  });
+
+
+  function menuAction(action) {
+    console.log(`Menu action: ${action}`);
+    alert(`You selected: ${action}`);
+  }
+  
+
+
+
+  /*function autoSave(data) {
+    const flat = data.map(row => row.join(','));  // can be improved to JSON
+
+    fetch('/save', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        'sheet_id': '{{ request.args.get("csv_url").split("/d/")[1].split("/")[0] }}',
+        'range': 'Sheet1!A1',
+        'data[]': flat
+      })
+    }).then(res => res.text()).then(msg => {
+      console.log("Autosaved:", msg);
+    }).catch(err => {
+      console.error("Autosave error:", err);
+    });
+  }
+
+  hot.addHook('afterChange', function(changes, source) {
+    if (source === 'loadData' || !changes) return;
+    const data = hot.getData();
+    autoSave(data);
+  }); */
+
+
+  const USER_LOGGED_IN = {{ user_logged_in|lower }};  // Will be true or false
+
+  function autoSave(data) {
+    if (!USER_LOGGED_IN) {
+      console.warn("Autosave skipped: not logged in.");
+      return;
+    }
+
+    const flat = data.map(row => row.join(','));
+
+    fetch('/save', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+      body: new URLSearchParams({
+        'sheet_id': '{{ request.args.get("csv_url").split("/d/")[1].split("/")[0] }}',
+        'range': 'Sheet1!A1',
+        'data[]': flat
+      })
+    })
+    .then(res => res.text())
+    .then(msg => console.log("Autosaved:", msg))
+    .catch(err => console.error("Autosave error:", err));
+  }
+
+  hot.addHook('afterChange', function(changes, source) {
+    if (source === 'loadData' || !changes) return;
+    const data = hot.getData();
+    autoSave(data);
+  });
+
+  if ({{ user_logged_in|tojson }}) {
+    document.getElementById('autosaveBanner').style.display = 'none';
+  }
+
+
+
+
+
+
+  // Make control panel draggable
+  (function makeDraggable() {
+    const panel = document.getElementById('controlPanel');
+    let isDragging = false, offsetX, offsetY;
+
+    panel.addEventListener('mousedown', function(e) {
+      if (e.target.tagName === 'SELECT' || e.target.tagName === 'INPUT' || e.target.tagName === 'BUTTON') return;
+      isDragging = true;
+      offsetX = e.clientX - panel.getBoundingClientRect().left;
+      offsetY = e.clientY - panel.getBoundingClientRect().top;
+      panel.style.transition = 'none';
+    });
+
+    document.addEventListener('mousemove', function(e) {
+      if (!isDragging) return;
+      panel.style.left = (e.clientX - offsetX) + 'px';
+      panel.style.top = (e.clientY - offsetY) + 'px';
+      panel.style.right = 'auto'; // to avoid conflict
+    });
+
+    document.addEventListener('mouseup', function() {
+      isDragging = false;
+    });
+  })();
+
+
+
+
+
+
+
+
+</script>
+
+
+</body>
+</html>

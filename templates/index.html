@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Enter Google Sheet URL</title>
+    <link rel="icon" href="data:,">
+    <style>
+        body {
+        font-family: sans-serif;
+        display: flex;
+        height: 100vh;
+        align-items: center;
+        justify-content: center;
+        background: #eef3f9;
+        }
+        form {
+        background: white;
+        padding: 30px;
+        border-radius: 12px;
+        box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        input {
+        width: 400px;
+        padding: 10px;
+        font-size: 1em;
+        margin-bottom: 10px;
+        }
+        button {
+        padding: 10px 20px;
+        font-size: 1em;
+        }
+    </style>
+    </head>
+    <body>
+        <a href="{{ url_for('authorize') }}">🔐 Sign in with Google</a>
+
+    <form method="post">
+        <h2>Paste your <em>published</em> Google Sheet URL:</h2>
+        <input type="url" name="sheet_url" required placeholder="https://docs.google.com/spreadsheets/d/e/.../pubhtml">
+        <br><br>
+        <button type="submit">View Sheet</button>
+    </form>
+
+</body>
+</html>
