@@ -20,32 +20,20 @@ This project is a **Flask-based web application** that allows users to view and 
 
 ```
 
+
 ├── app.py                     # Flask backend
-
 ├── templates/
-
 │   ├── index.html             # Home page for pasting Google Sheet URL
-
 │   └── view\.html              # Sheet viewer with gesture + voice UI
-
 ├── static/
-
 │   └── js/
-
 │       ├── gestureController.js
-
 │       ├── gestureHighlight\_debug.js
-
 │       ├── pinchSelect.js
-
 │       ├── voicechat.js
-
 │       └── ... (more gestures)
-
 ├── rebuild.json               # OAuth client secrets
-
 ├── .env                       # API keys and Flask secret
-
 └── README.md                  # You're here
 
 
