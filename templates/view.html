@@ -41,6 +41,51 @@
       z-index: 0;
     }
 
+    /* Transparent entire Handsontable structure */
+    #hot,
+    #hot .handsontable,
+    #hot .ht_master,
+    #hot .wtHider,
+    #hot .wtSpreader,
+    #hot .htCore,
+    .handsontable table,
+    .handsontable td,
+    .handsontable th {
+      background-color: transparent !important;
+      background: transparent !important;
+    }
+
+    /* Optional blur or glow effect for modern UI */
+    .handsontable td,
+    .handsontable th {
+      backdrop-filter: blur(2px);  /* optional */
+      color: #000 !important;      /* text remains readable */
+      border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    }
+
+    /* Remove shadows or outlines if present */
+    .handsontable .wtHolder {
+      box-shadow: none !important;
+    }
+
+
+
+
+    #webcamOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      object-fit: cover;
+      z-index: 10;  
+      opacity: 0.15;
+      filter: grayscale(100%);
+      pointer-events: none;  
+      transform: scaleX(-1);
+    }
+
+
     .menu-bar {
       position: relative;
       display: flex;
@@ -154,8 +199,130 @@
     }
 
 
+    #voiceChatbox {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    width: 280px;
+    height: 200px;
+    background: #ffffff;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    display: flex;
+    flex-direction: column;
+    z-index: 99999;
+    overflow: hidden;
+    font-size: 14px;
+  }
 
-    
+  #voiceHeader {
+    background: #f1f3f4;
+    padding: 8px;
+    font-weight: bold;
+    border-bottom: 1px solid #ddd;
+  }
+
+  #voiceTranscript {
+    flex: 1;
+    padding: 8px;
+    overflow-y: auto;
+    color: #333;
+  }
+
+  #micBtn {
+    background: #007bff;
+    color: white;
+    border: none;
+    padding: 10px;
+    font-size: 16px;
+    cursor: pointer;
+    width: 100%;
+    transition: background 0.2s;
+  }
+
+  #micBtn.recording {
+    background: #dc3545;
+  }
+
+
+  /* Toggle Button */
+  #toggleChatBtn {
+    position: fixed;
+    right: 20px;
+    bottom: 20px;
+    background: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 14px;
+    border-radius: 50%;
+    cursor: pointer;
+    z-index: 100000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+
+  #toggleChatBtn.hidden {
+    display: none;
+  }
+
+  /* Hide button inside chatbox */
+  #hideChatBtn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    cursor: pointer;
+    color: #555;
+  }
+
+
+
+
+  .chat-message {
+    padding: 6px;
+    margin: 4px 0;
+    border-radius: 5px;
+    max-width: 80%;
+  }
+
+  .chat-message.user {
+    background-color: #e0f7fa;
+    text-align: left;
+  }
+
+  .chat-message.bot {
+    background-color: #f1f1f1;
+    text-align: left;
+  }
+
+
+
+
+
+ 
+
+  .htCore td.gesture-highlight,
+  .htCore th.gesture-highlight {
+      background-color: rgba(0, 255, 0, 0.4) !important;
+      outline: 2px solid limegreen !important;
+      transition: background-color 0.1s ease;
+  }
+
+  /* Selected cell via pinch gesture 
+  .htCore td.gesture-selected {
+      background-color: #555 !important;
+      color: white !important;
+  } */
+
+
+
+
 
   </style>
 </head>
@@ -165,6 +332,12 @@
   <div class="sheet-toolbar">
     🗂 <div id="editableTitle" contenteditable="true">{{ sheet_name }}</div>
   </div>
+
+
+  <video id="webcamOverlay" autoplay muted playsinline></video>
+  <canvas id="handCanvas" style="position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: 20; pointer-events: none;"></canvas>
+
+
 
 
 
@@ -268,13 +441,43 @@
 
         </div>
     </div>
+
+
+    <!-- Chat Toggle Button -->
+    <button id="toggleChatBtn">💬</button>
+
+    <!-- Updated Chatbox -->
+    <div id="voiceChatbox">
+      <button id="hideChatBtn">×</button>
+      <div id="voiceHeader">🎙 Voice Chat</div>
+      <div id="voiceTranscript">Click mic to start speaking...</div>
+      <button id="micBtn">🎤</button>
+    </div>
+
 </div>
 
 
 <script src="https://cdn.jsdelivr.net/npm/handsontable@14.0.0/dist/handsontable.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.min.js"></script>
+<script src="{{ url_for('static', filename='js/gestureHighlight_debug.js') }}"></script>
+
 
 
 <script>
+  const opacitySlider = document.getElementById('opacitySlider');
+    const videoElement = document.querySelector('video'); 
+
+    // video opacity when slider changes
+    opacitySlider.addEventListener('input', () => {
+        videoElement.style.opacity = opacitySlider.value;
+    });
+
+
+
+
+
   const titleDiv = document.getElementById('editableTitle');
 
   titleDiv.addEventListener('focus', () => {
@@ -284,7 +487,7 @@
   titleDiv.addEventListener('blur', () => {
     titleDiv.style.outline = 'none';
     console.log("Updated sheet name:", titleDiv.innerText.trim());
-    // Optionally send to backend with fetch() or save locally
+    
   });
 
 
@@ -346,31 +549,6 @@
 
 
 
-  /*function autoSave(data) {
-    const flat = data.map(row => row.join(','));  // can be improved to JSON
-
-    fetch('/save', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: new URLSearchParams({
-        'sheet_id': '{{ request.args.get("csv_url").split("/d/")[1].split("/")[0] }}',
-        'range': 'Sheet1!A1',
-        'data[]': flat
-      })
-    }).then(res => res.text()).then(msg => {
-      console.log("Autosaved:", msg);
-    }).catch(err => {
-      console.error("Autosave error:", err);
-    });
-  }
-
-  hot.addHook('afterChange', function(changes, source) {
-    if (source === 'loadData' || !changes) return;
-    const data = hot.getData();
-    autoSave(data);
-  }); */
 
 
   const USER_LOGGED_IN = {{ user_logged_in|lower }};  // Will be true or false
@@ -441,12 +619,287 @@
 
 
 
+  const webcam = document.getElementById('webcamOverlay');
+  navigator.mediaDevices.getUserMedia({ video: true })
+    .then(stream => {
+      webcam.srcObject = stream;
+    })
+    .catch(err => {
+      console.error("Webcam access denied or not available:", err);
+    });
+
+
+
+  const canvasElement = document.getElementById('handCanvas');
+  const canvasCtx = canvasElement.getContext('2d');
+
+  function resizeCanvas() {
+    canvasElement.width = window.innerWidth;
+    canvasElement.height = window.innerHeight;
+  }
+  resizeCanvas();
+  window.addEventListener('resize', resizeCanvas);
+
+  const hands = new Hands({
+    locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+  });
+  hands.setOptions({
+    maxNumHands: 2,
+    modelComplexity: 1,
+    minDetectionConfidence: 0.7,
+    minTrackingConfidence: 0.5
+  });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  const webcamFeed = new Camera(webcam, {
+    onFrame: async () => {
+      await hands.send({ image: webcam });
+    },
+    width: 640,
+    height: 480
+  });
+  webcamFeed.start();
+
+
+
+
+
+  // Mode selection logic
+  const modeSelector = document.getElementById("modeSelector");
+  const webcamOverlay = document.getElementById("webcamOverlay");
+  const handCanvas = document.getElementById("handCanvas");
+
+  // Simulated input controllers
+  let voiceEnabled = false;
+  let gestureEnabled = false;
+
+  modeSelector.addEventListener("change", function () {
+    const mode = this.value;
+
+    // Reset all modes
+    voiceEnabled = false;
+    gestureEnabled = false;
+    webcamOverlay.style.display = "none";
+    handCanvas.style.display = "none";
+
+    // Apply selected mode
+    if (mode === "voice") {
+      voiceEnabled = true;
+      console.log("Voice input enabled, webcam input disabled.");
+      toggleBtn.style.display = "flex";
+      voiceChatbox.style.display = "flex";
+    } 
+    else if (mode === "gesture") {
+      gestureEnabled = true;
+      webcamOverlay.style.display = "block";
+      handCanvas.style.display = "block";
+      console.log("Gesture input enabled, voice input disabled.");
+      toggleBtn.style.display = "none";
+      voiceChatbox.style.display = "none";
+    } 
+    else if (mode === "wimp") {
+      console.log("WIMP mode: No voice or webcam input.");
+      toggleBtn.style.display = "none";
+      voiceChatbox.style.display = "none";
+    } 
+    else if (mode === "combination") {
+      voiceEnabled = true;
+      gestureEnabled = true;
+      webcamOverlay.style.display = "block";
+      handCanvas.style.display = "block";
+      console.log("Combination mode: Voice + Gesture input enabled.");
+      toggleBtn.style.display = "flex";
+      voiceChatbox.style.display = "flex";
+    }
+  });
+
+
+
+
+
+
+
+
+  let isRecording = false;
+  let mediaRecorder;
+  let audioChunks = [];
+  let recognition;
+
+  const micBtn = document.getElementById("micBtn");
+  const transcriptBox = document.getElementById("voiceTranscript");
+
+  micBtn.addEventListener("click", () => {
+    if (!isRecording) {
+      startRecording();
+    } else {
+      stopRecording();
+    }
+  });
+
+
+
+  async function startRecording() {
+    isRecording = true;
+    micBtn.textContent = "⏹ Stop";
+    micBtn.classList.add("recording");
+
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+
+    mediaRecorder.start();
+    transcriptBox.textContent = "Listening... 🎙";
+
+    audioChunks = [];
+
+    mediaRecorder.addEventListener("dataavailable", event => {
+      audioChunks.push(event.data);
+    });
+
+    // Local quick transcription (Web Speech API)
+    if ('webkitSpeechRecognition' in window) {
+        let recognition = new webkitSpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.continuous = true;
+        recognition.interimResults = true;
+
+        let lastTranscript = ""; 
+
+        recognition.onresult = function(event) {
+            let transcript = event.results[event.results.length - 1][0].transcript;
+
+            // only add final unique transcripts to chat log
+            if (event.results[event.results.length - 1].isFinal && transcript !== lastTranscript) {
+                addToChatLog("user", transcript); 
+                lastTranscript = transcript;
+            }
+        };
+
+        recognition.start();
+        micBtn.dataset.recognition = recognition;
+    }
+}
+
+
+
+
+
+
+
+  function stopRecording() {
+    isRecording = false;
+    micBtn.textContent = "🎤";
+    micBtn.classList.remove("recording");
+
+    if (mediaRecorder && mediaRecorder.state !== "inactive") mediaRecorder.stop();
+    if (recognition){
+      recognition.stop();
+      recognition = null; // Clear recognition instance
+    } 
+
+    mediaRecorder.addEventListener("stop", async () => {
+      const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+      const formData = new FormData();
+      formData.append("file", audioBlob, "voice.webm");
+      formData.append("model", "whisper-1");
+      formData.append("language", "en");
+
+      fetch("https://api.openai.com/v1/audio/transcriptions", {
+        method: "POST",
+        headers: { "Authorization": "Bearer YOUR_OPENAI_API_KEY" },
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        //transcriptBox.textContent = data.text || "No speech detected.";
+        addToChatLog("bot", data.text || "Stopped.");
+      })
+      .catch(() => {
+        transcriptBox.textContent = "⚠️ Error transcribing audio.";
+      });
+    });
+  }
+
+  function addToChatLog(sender, message) {
+    const logEntry = document.createElement("div");
+    logEntry.className = sender === "user" ? "chat-message user" : "chat-message bot";
+    logEntry.textContent = (sender === "user" ? "" : "🤖: ") + message;
+    transcriptBox.appendChild(logEntry);
+    transcriptBox.scrollTop = transcriptBox.scrollHeight; // Auto-scroll to latest
+  }
+
+
+
+
+  const chatbox = document.getElementById('voiceChatbox');
+  const toggleBtn = document.getElementById('toggleChatBtn');
+  const hideBtn = document.getElementById('hideChatBtn');
+
+  // Show Chatbox
+  toggleBtn.addEventListener('click', () => {
+    chatbox.style.display = 'flex';
+    toggleBtn.classList.add('hidden');
+  });
+
+  // Hide Chatbox
+  hideBtn.addEventListener('click', () => {
+    chatbox.style.display = 'none';
+    toggleBtn.classList.remove('hidden');
+  });
+
+
+
+
+
+
+
+  /*document.addEventListener("DOMContentLoaded", () => {
+      setupGestureHighlight(hands, canvasElement, canvasCtx);
+  });*/
+
+
+
+
+
+
+
+  document.addEventListener("DOMContentLoaded", function() {
+    setupGestureHighlightDebug(hands, canvasElement, canvasCtx);
+  });
+
+
+
+  /*document.addEventListener("DOMContentLoaded", function() {
+    // Add pinch-to-select functionality
+    setupPinchSelect(hands, canvasElement, canvasCtx);
+}); */
+
+
+
+
+
+
+
+
+
 
 
 
 
 
 </script>
+
 
 
 </body>
