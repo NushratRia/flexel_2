@@ -10,6 +10,7 @@ import google.oauth2.credentials
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
 import logging
+from gpt_command_handler import process_command
 
 
 # Configure logging
@@ -159,6 +160,17 @@ def save_to_sheet():
     except Exception as e:
         logging.error(f"Failed to save to sheet: {e}", exc_info=True)
         return f"Error saving to sheet: {e}"
+    
+    
+@app.route("/api/voice-command", methods=["POST"])
+def voice_command():
+    data = request.json
+    transcript = data.get("transcript", "")
+    response = process_command(transcript)
+    return jsonify({"result": response})
+
+
+
 
 if __name__ == '__main__':
     app.run(debug=True)
