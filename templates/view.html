@@ -462,6 +462,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.min.js"></script>
 <script src="{{ url_for('static', filename='js/gestureHighlight_debug.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voiceActions.js') }}"></script>
 
 
 
@@ -539,6 +540,7 @@
     autoWrapCol: true,
     fixedRowsTop: 1  // Freeze the first row (your original headers)
   });
+  window.VoiceActions && window.VoiceActions.init(hot, container);
 
 
   function menuAction(action) {
@@ -831,7 +833,10 @@
                       return;
                     }
 
-                    addToChatLog("bot", "🤖 No valid action recognized.");
+                    // Try the extended actions in voiceActions.js
+                    if (window.VoiceActions && window.VoiceActions.execute(cmd)) return;
+
+                    addToChatLog("bot", " No valid action recognized.");
                   })
                   .catch(err => {
                     console.error("Command error:", err);
