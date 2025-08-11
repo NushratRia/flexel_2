@@ -783,6 +783,84 @@
             if (event.results[event.results.length - 1].isFinal && transcript !== lastTranscript) {
                 addToChatLog("user", transcript); 
                 lastTranscript = transcript;
+                    fetch("/api/voice-command", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ transcript })
+                  })
+                  .then(async res => {
+                    const body = await res.json().catch(() => ({}));
+                    return { ok: res.ok, status: res.status, body };
+                  })
+                  .then(({ ok, status, body }) => {
+                    // Support both shapes: {action:...} or {result:{action:...}}
+                    const cmd = body && body.result ? body.result : body;
+
+                    if (!ok || !cmd || cmd.error) {
+                      addToChatLog("bot", "⚠️ " + (cmd && cmd.error ? cmd.error : "Command failed") + (status ? ` (HTTP ${status})` : ""));
+                      return;
+                    }
+
+                    addToChatLog("bot", "🧠 " + JSON.stringify(cmd));
+
+                    // --- Execute recognized actions ---
+                    if (cmd.action === "sum" && (cmd.range || cmd.target)) {
+                      const range = cmd.range || cmd.target;
+                      const total = executeSum(range);
+                      addToChatLog("bot", `🧮 Sum(${range}) = ${total}`);
+                      return;
+                    }
+
+                    if (cmd.action === "average" && (cmd.range || cmd.target)) {
+                      const range = cmd.range || cmd.target;
+                      const avg = executeAverage(range);
+                      addToChatLog("bot", `📊 Average(${range}) = ${avg}`);
+                      return;
+                    }
+
+                    if (cmd.action === "write" && cmd.range && typeof cmd.value !== "undefined") {
+                      const wrote = executeWriteValue(cmd.range, cmd.value);
+                      addToChatLog("bot", wrote ? `✍️ Wrote "${cmd.value}" into ${cmd.range}` : "⚠️ Write failed.");
+                      return;
+                    }
+
+                    if (cmd.action === "sort" && cmd.column) {
+                      const dir = (cmd.direction || "asc").toLowerCase();
+                      const okSort = executeSortColumn(cmd.column, dir);
+                      addToChatLog("bot", okSort ? `⇅ Sorted column ${cmd.column} (${dir})` : "⚠️ Sort failed.");
+                      return;
+                    }
+
+                    addToChatLog("bot", "🤖 No valid action recognized.");
+                  })
+                  .catch(err => {
+                    console.error("Command error:", err);
+                    addToChatLog("bot", "⚠️ Command failed.");
+                  });
+
+                    /* fetch("/api/voice-command", {
+                      method: "POST",
+                      headers: {
+                          "Content-Type": "application/json"
+                      },
+                      body: JSON.stringify({ transcript })
+                  })
+                  .then(res => res.json())
+                  .then(data => {
+                      const gptResponse = JSON.parse(data.result);
+                      addToChatLog("bot", " Interpreted as: " + data.result);
+
+                      if (gptResponse.action === "sum" && gptResponse.target) {
+                          const sum = executeSum(gptResponse.target);
+                          addToChatLog("bot", " Sum result: " + sum);
+                      } else {
+                          addToChatLog("bot", " No valid action recognized.");
+                      }
+                  })
+                  .catch(err => {
+                      console.error("Command error:", err);
+                      addToChatLog("bot", "Command failed.");
+                  }); */
             }
         };
 
@@ -884,6 +962,104 @@
     // Add pinch-to-select functionality
     setupPinchSelect(hands, canvasElement, canvasCtx);
 }); */
+
+
+function colLettersToIndex(colLetters) {
+  const s = String(colLetters || "").toUpperCase().trim();
+  let n = 0;
+  for (let i = 0; i < s.length; i++) {
+    const code = s.charCodeAt(i);
+    if (code < 65 || code > 90) return -1; // A–Z only
+    n = n * 26 + (code - 64);
+  }
+  return n - 1; // zero-based index
+}
+
+function executeSum(cellRange) {
+  const match = String(cellRange).match(/^\s*([A-Z]+)(\d+)\s*:\s*([A-Z]+)(\d+)\s*$/i);
+  if (!match) return "Invalid range";
+
+  const [, colStart, rowStart, colEnd, rowEnd] = match;
+  const colIndexStart = colLettersToIndex(colStart);
+  const colIndexEnd   = colLettersToIndex(colEnd);
+  const rowIndexStart = parseInt(rowStart, 10) - 1;
+  const rowIndexEnd   = parseInt(rowEnd, 10) - 1;
+
+  if (colIndexStart < 0 || colIndexEnd < 0 || rowIndexStart < 0 || rowIndexEnd < 0) return "Invalid range";
+
+  let total = 0;
+  for (let r = rowIndexStart; r <= rowIndexEnd; r++) {
+    for (let c = colIndexStart; c <= colIndexEnd; c++) {
+      const value = hot.getDataAtCell(r, c);
+      const num = parseFloat(value);
+      if (!isNaN(num)) total += num;
+    }
+  }
+  return total;
+}
+
+
+
+function executeAverage(cellRange) {
+  const m = String(cellRange).match(/^\s*([A-Z]+)(\d+)\s*:\s*([A-Z]+)(\d+)\s*$/i);
+  if (!m) return "Invalid range";
+
+  const [, c1, r1, c2, r2] = m;
+  const cStart = colLettersToIndex(c1);
+  const cEnd   = colLettersToIndex(c2);
+  const rStart = parseInt(r1, 10) - 1;
+  const rEnd   = parseInt(r2, 10) - 1;
+
+  if (cStart < 0 || cEnd < 0 || rStart < 0 || rEnd < 0) return "Invalid range";
+
+  let total = 0, count = 0;
+  for (let r = rStart; r <= rEnd; r++) {
+    for (let c = cStart; c <= cEnd; c++) {
+      const v = hot.getDataAtCell(r, c);
+      const n = parseFloat(v);
+      if (!isNaN(n)) { total += n; count++; }
+    }
+  }
+  return count ? (total / count) : 0;
+}
+
+
+/**
+ * Write a value into a single cell like "B7"
+ * Returns true on success.
+ */
+function executeWriteValue(a1, value) {
+  const m = String(a1).match(/^\s*([A-Z]+)(\d+)\s*$/i);
+  if (!m) return false;
+
+  const col = colLettersToIndex(m[1]);
+  const row = parseInt(m[2], 10) - 1;
+  if (col < 0 || row < 0) return false;
+
+  hot.setDataAtCell(row, col, value);
+  return true;
+}
+
+
+/**
+ * Sort the visible table by a column letter (e.g., "C") in 'asc' or 'desc'
+ * Returns true on success.
+ */
+function executeSortColumn(colLetter, direction) {
+  const colIndex = colLettersToIndex(colLetter);
+  if (colIndex < 0) return false;
+
+  const plugin = hot.getPlugin('columnSorting');
+  if (!plugin) return false;
+
+  try { plugin.enablePlugin && plugin.enablePlugin(); } catch (_) {}
+  plugin.sort({ column: colIndex, sortOrder: (String(direction).toLowerCase() === 'desc' ? 'desc' : 'asc') });
+  hot.render();
+  return true;
+}
+
+
+
 
 
 

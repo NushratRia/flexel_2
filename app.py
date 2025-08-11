@@ -1,5 +1,5 @@
 import flask
-from flask import Flask, request, render_template, redirect, url_for, session
+from flask import Flask, request, render_template, redirect, url_for, session, jsonify
 import requests
 import csv
 import io
@@ -164,10 +164,10 @@ def save_to_sheet():
     
 @app.route("/api/voice-command", methods=["POST"])
 def voice_command():
-    data = request.json
-    transcript = data.get("transcript", "")
-    response = process_command(transcript)
-    return jsonify({"result": response})
+    transcript = (request.json or {}).get("transcript", "")
+    result = process_command(transcript)  # dict
+    status = result.get("status", 200) if "error" in result else 200
+    return jsonify(result), status
 
 
 

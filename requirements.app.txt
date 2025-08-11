@@ -1,0 +1,24 @@
+# --- Core app ---
+Flask>=3.0
+Flask-Cors>=4.0
+requests>=2.31
+Jinja2>=3.1
+
+# --- Env / logging ---
+python-dotenv>=1.0
+
+# --- Sheets (server-side auth + save route) ---
+google-api-python-client>=2.100
+google-auth>=2.28
+google-auth-httplib2>=0.2
+google-auth-oauthlib>=1.2
+
+# --- Data handling (if you do any server-side CSV/Excel ops) ---
+pandas>=2.2
+openpyxl>=3.1
+
+# --- OpenAI (server-side GPT + Whisper proxy) ---
+openai>=1.30.0
+
+# --- Prod server (optional; for local dev you can skip) ---
+waitress>=3.0
