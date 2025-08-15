@@ -463,6 +463,8 @@
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.min.js"></script>
 <script src="{{ url_for('static', filename='js/gestureHighlight_debug.js') }}"></script>
 <script src="{{ url_for('static', filename='js/voiceActions.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gestureUtils.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gestureActions.js') }}"></script>
 
 
 
@@ -652,6 +654,8 @@
     minTrackingConfidence: 0.5
   });
 
+  
+
 
 
 
@@ -673,6 +677,8 @@
     height: 480
   });
   webcamFeed.start();
+
+  window.GestureActions && window.GestureActions.init(hot, document.getElementById('hot'), hands);
 
 
 

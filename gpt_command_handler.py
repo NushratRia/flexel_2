@@ -142,9 +142,9 @@ def _safe_parse_json(text: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-# -----------------------------------------------------------------------------
+
 # Public API
-# -----------------------------------------------------------------------------
+
 def process_command(transcript: str) -> Dict[str, Any]:
     """
     Convert a natural-language command (spoken text) into a spreadsheet action.
@@ -158,7 +158,7 @@ def process_command(transcript: str) -> Dict[str, Any]:
         client = _get_client()
         resp = client.chat.completions.create(
             model=DEFAULT_MODEL,
-            temperature=0,  # deterministic output -> easier to parse
+            temperature=0,  
             messages=[
                 {"role": "system", "content": SYSTEM_PROMPT},
                 {"role": "user", "content": transcript},
@@ -201,7 +201,7 @@ def process_command(transcript: str) -> Dict[str, Any]:
             logger.info(f"Command gated: action={action} confidence={confidence} < {threshold}")
             return {"action": "none", "confidence": confidence}
 
-        # Passed the gate ✅
+        # Passed the gate 
         return parsed
 
     except Exception as e:
