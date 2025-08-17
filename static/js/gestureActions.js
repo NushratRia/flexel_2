@@ -120,8 +120,17 @@
         const handsInfo = handsLM.map((lm, idx) => {
             const indexTip = lm[8], thumbTip = lm[4];
             const td = GU.tdAt(indexTip);
-            const a1 = td ? GU.a1FromTD(td) : null;
-            const rc = td ? GU.rcFromTD(td) : null;
+
+            // ✅ Use Handsontable’s resolver so clones (fixed rows/cols) map to the right cell
+            const rc = td
+            ? (this._hot && typeof this._hot.getCoords === 'function'
+                ? this._hot.getCoords(td)               // preferred
+                : GU.rcFromTD(td))                      // fallback
+            : null;
+
+            // Build A1 from resolved coords (don’t trust clone rowIndex/cellIndex)
+            const a1 = rc ? `${this._col(rc.col)}${rc.row + 1}` : (td ? GU.a1FromTD(td) : null);
+
             const k = GU.updateKinematics(this._kin, `h${idx}`, indexTip, t);
             const openScore = GU.palmOpenScore(lm);
             return {
@@ -131,6 +140,7 @@
             closedFist: GU.isClosedFist(lm),
             k, indexTip
             };
+
         });
 
         // ---- 1) SELECT (pinch on a cell) ----
