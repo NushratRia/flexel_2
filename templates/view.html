@@ -342,7 +342,8 @@
   /* Quick buttons strip (to the left of the control panel) */
   #quickButtons {
     position: fixed; /* JS will set top/left */
-    display: flex; gap: 8px; z-index: 100002;
+    display: flex; gap: 8px; 
+    z-index: 10000002;
     pointer-events: none; /* so area stays click-through except buttons */
   }
   #quickButtons .qbtn {
@@ -503,8 +504,8 @@
     <div id="voiceChatbox">
       <button id="hideChatBtn">×</button>
       <div id="voiceHeader">🎙 Voice Chat</div>
-      <div id="voiceTranscript">Click mic to start speaking...</div>
-      <button id="micBtn">🎤</button>
+      <div id="voiceTranscript">Say Flexee and then your command...</div>
+      <!--button id="micBtn">🎤</button-->
     </div>
 
 </div>
@@ -575,6 +576,9 @@
 <script src="{{ url_for('static', filename='js/voiceActions.js') }}"></script>
 <script src="{{ url_for('static', filename='js/gestureUtils.js') }}"></script>
 <script src="{{ url_for('static', filename='js/gestureActions.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voicechat.js') }}"></script>
+<script src="{{ url_for('static', filename='js/hotwordBootstrap.js') }}"></script>
+
 
 
 
@@ -654,7 +658,9 @@
     
   });
   window.VoiceActions && window.VoiceActions.init(hot, container);
-  window.VoiceChat && window.VoiceChat.init(hot, container);
+  window.VoiceChat && window.VoiceChat.init(hot, container);   
+  window.HotwordBootstrap && window.HotwordBootstrap.init();    
+
 
 
   function menuAction(action) {

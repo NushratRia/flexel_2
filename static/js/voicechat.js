@@ -13,18 +13,24 @@
     const SpeechRecognition =
         global.SpeechRecognition || global.webkitSpeechRecognition;
 
-    const HOTWORD_REGEX = /\b(?:hey\s+|ok\s+)?flexe?e\b/i; // "flexee" variants
+    // Accepts "flexee", "hey flexee", "ok flexee", and tiny misspeaks like "flexi"
+    const HOTWORD_REGEX = /\b(?:hey\s+|ok\s+)?flexe?i?e?\b/i;
 
     const VoiceChat = {
+        _ready: false,
         recognition: null,
         listening: false,
         userStopped: false,
 
-        // Modes: "hotword" (idle) -> "command" (armed for a single final)
-        MODE: "hotword",
+        // Simple finite states
+        MODE: "hotword",   // "hotword" | "command" | "stopped"
         ARMED: false,
         lastTranscript: "",
         commandSilenceTimer: null,
+        // --- ADDED: keep track of a “listening…” line we inject in chat ---
+        _listeningCueShown: false,
+
+        isReady() { return !!this._ready; },
 
         init(hotInstance, containerEl) {
         if (!SpeechRecognition) {
@@ -32,17 +38,17 @@
             return;
         }
 
-        // stash refs in case other modules need them
         this.hot = hotInstance;
         this.container = containerEl;
 
         const rec = new SpeechRecognition();
         rec.lang = "en-US";
-        rec.continuous = true;       // keep streaming to catch hotwords
-        rec.interimResults = true;   // needed to detect hotwords quickly
+        rec.continuous = true;     // keep streaming to catch hotwords
+        rec.interimResults = true; // detect hotwords quickly
         rec.maxAlternatives = 1;
 
         rec.onresult = (event) => this._onResult(event);
+
         rec.onerror = (e) => {
             console.warn("[VoiceChat] recognition error:", e.error);
             // Auto-recover on transient errors
@@ -54,7 +60,7 @@
         // Keep listening (unless user intentionally stopped)
         rec.onend = () => {
             this.listening = false;
-            if (!this.userStopped) {
+            if (!this.userStopped && this.MODE !== "stopped") {
             try { rec.start(); this.listening = true; } catch (_) {}
             }
         };
@@ -66,41 +72,69 @@
 
         // Safety: resume after tab visibility changes
         document.addEventListener("visibilitychange", () => {
-            if (!this.userStopped && document.visibilityState === "visible" && !this.listening) {
+            if (!this.userStopped &&
+                document.visibilityState === "visible" &&
+                !this.listening &&
+                this.MODE !== "stopped") {
             try { this.recognition.start(); this.listening = true; } catch (_) {}
             }
         });
 
-        console.info("[VoiceChat] initialized (hotword mode)");
+        // auto-restart when idling in hotword mode
+        this.recognition.onend = () => {
+            if (this.MODE === "hotword") {
+            try { this.recognition.start(); } catch (_) {}
+            }
+        };
+
+        // Mark ready
+        this._ready = true;
+        console.info("[VoiceChat] ready (hotword mode)");
         },
 
         start() {
-        if (!this.recognition) return;
-        this.userStopped = false;
-        if (!this.listening) {
-            try { this.recognition.start(); this.listening = true; } catch (_) {}
+        if (!this._ready || !this.recognition) {
+            console.warn("[VoiceChat] start() called before init");
+            return;
         }
-        this.MODE = "hotword";
-        this.ARMED = false;
+        if (this.MODE !== "command") this.MODE = "hotword";
+        this.userStopped = false;
+
+        try {
+            this.recognition.start();
+            this.listening = true;
+            console.info("[VoiceChat] recognition started");
+        } catch (e) {
+            // Chrome throws if recognition is already running; make it harmless
+            console.debug("[VoiceChat] start skipped:", e && e.message);
+        }
         },
 
         stop() {
-        if (!this.recognition) return;
+        this.MODE = "stopped";
         this.userStopped = true;
-        try { this.recognition.stop(); } catch (_) {}
-        this.listening = false;
-        this._disarm();
+        this._hideListeningCue();
+        if (this.recognition) {
+            try { this.recognition.stop(); } catch (_) {}
+        }
+        console.info("[VoiceChat] recognition stopped");
         },
+
+        // ---------- internal helpers ----------
 
         _armForCommand() {
         this.MODE = "command";
         this.ARMED = true;
         this.lastTranscript = "";
-        addToChatLog && addToChatLog("bot", "👂 Hotword detected — say your command");
+        // --- ADDED: visual cue while waiting for the one-shot command
+        this._showListeningCue();
+
         clearTimeout(this.commandSilenceTimer);
         this.commandSilenceTimer = setTimeout(() => {
-            this._disarm();
+            // timeout without a real command
+            this._hideListeningCue();
             addToChatLog && addToChatLog("bot", "⏱️ No command heard — say “Flexee” again.");
+            this._disarm();
         }, 5000);
         },
 
@@ -109,6 +143,20 @@
         this.ARMED = false;
         clearTimeout(this.commandSilenceTimer);
         this.commandSilenceTimer = null;
+        this._hideListeningCue();
+        },
+
+        // --- ADDED: chat cue management ---
+        _showListeningCue() {
+        if (this._listeningCueShown) return;
+        addToChatLog && addToChatLog("bot", "🎤 Listening… (5s)");
+        this._listeningCueShown = true;
+        },
+        _hideListeningCue() {
+        if (!this._listeningCueShown) return;
+        // We can’t delete existing chat entries without changing chat code;
+        // simply mark the cue as no longer active so we don’t add duplicates.
+        this._listeningCueShown = false;
         },
 
         _onResult(event) {
@@ -134,6 +182,15 @@
         // --- One-shot command mode: only act on final unique result ---
         if (this.MODE === "command" && this.ARMED && last && last.isFinal && transcript && transcript !== this.lastTranscript) {
             this.lastTranscript = transcript;
+
+            // ✨ NEW: If the *final* text is just the hotword, do nothing (don’t log)
+            if (HOTWORD_REGEX.test(transcript.trim())) {
+            console.info("[VoiceChat] Hotword only (final) — not logging or sending.");
+            return;
+            }
+
+            // This is a real command → log & process
+            this._hideListeningCue();
             addToChatLog && addToChatLog("user", transcript);
 
             // send to backend -> get structured cmd -> execute
@@ -143,65 +200,66 @@
             body: JSON.stringify({ transcript })
             })
             .then(async res => {
-            const body = await res.json().catch(() => ({}));
-            return { ok: res.ok, status: res.status, body };
+                const body = await res.json().catch(() => ({}));
+                return { ok: res.ok, status: res.status, body };
             })
             .then(({ ok, status, body }) => {
-            const cmd = body && body.result ? body.result : body;
+                const cmd = body && body.result ? body.result : body;
 
-            if (!ok || !cmd || cmd.error) {
-                addToChatLog && addToChatLog("bot", "⚠️ " + (cmd && cmd.error ? cmd.error : "Command failed") + (status ? ` (HTTP ${status})` : ""));
+                if (!ok || !cmd || cmd.error) {
+                addToChatLog && addToChatLog(
+                    "bot",
+                    "⚠️ " + (cmd && cmd.error ? cmd.error : "Command failed") + (status ? ` (HTTP ${status})` : "")
+                );
                 return;
-            }
+                }
 
-            //addToChatLog && addToChatLog("bot", "🧠 " + JSON.stringify(cmd));
-
-            // Optional: ignore chatter using confidence (if backend includes it)
-            if (cmd.action === "none" || (typeof cmd.confidence === "number" && cmd.confidence < 0.55)) {
+                // Optional: ignore chatter using confidence (if backend includes it)
+                if (cmd.action === "none" || (typeof cmd.confidence === "number" && cmd.confidence < 0.55)) {
                 addToChatLog && addToChatLog("bot", "🕊️ No sheet action detected.");
                 return;
-            }
+                }
 
-            // Built-in actions already in your view.html
-            if (cmd.action === "sum" && (cmd.range || cmd.target)) {
+                // Built-in actions already in your view.html
+                if (cmd.action === "sum" && (cmd.range || cmd.target)) {
                 const range = cmd.range || cmd.target;
                 const total = executeSum(range);
                 addToChatLog && addToChatLog("bot", `🧮 Sum(${range}) = ${total}`);
                 return;
-            }
+                }
 
-            if (cmd.action === "average" && (cmd.range || cmd.target)) {
+                if (cmd.action === "average" && (cmd.range || cmd.target)) {
                 const range = cmd.range || cmd.target;
                 const avg = executeAverage(range);
                 addToChatLog && addToChatLog("bot", `📊 Average(${range}) = ${avg}`);
                 return;
-            }
+                }
 
-            if (cmd.action === "write" && cmd.range && typeof cmd.value !== "undefined") {
+                if (cmd.action === "write" && cmd.range && typeof cmd.value !== "undefined") {
                 const okWrite = executeWriteValue(cmd.range, cmd.value);
                 addToChatLog && addToChatLog("bot", okWrite ? `✍️ Wrote "${cmd.value}" into ${cmd.range}` : "⚠️ Write failed.");
                 return;
-            }
+                }
 
-            if (cmd.action === "sort" && cmd.column) {
+                if (cmd.action === "sort" && cmd.column) {
                 const dir = (cmd.direction || "asc").toLowerCase();
                 const okSort = executeSortColumn(cmd.column, dir);
                 addToChatLog && addToChatLog("bot", okSort ? `⇅ Sorted column ${cmd.column} (${dir})` : "⚠️ Sort failed.");
                 return;
-            }
+                }
 
-            // Extended actions via voiceActions.js (select/scroll/undo/redo/delete/merge/zoom/copy/paste/autofill)
-            if (global.VoiceActions && global.VoiceActions.execute(cmd)) return;
+                // Extended actions via voiceActions.js (select/scroll/undo/redo/delete/merge/zoom/copy/paste/autofill)
+                if (global.VoiceActions && global.VoiceActions.execute(cmd)) return;
 
-            addToChatLog && addToChatLog("bot", "🤖 No valid action recognized.");
+                addToChatLog && addToChatLog("bot", "🤖 No valid action recognized.");
             })
             .catch(err => {
-            console.error("[VoiceChat] Command error:", err);
-            addToChatLog && addToChatLog("bot", "⚠️ Command failed.");
+                console.error("[VoiceChat] Command error:", err);
+                addToChatLog && addToChatLog("bot", "⚠️ Command failed.");
             })
             .finally(() => {
-            // disarm after one command (success or fail) and return to hotword mode
-            this._disarm();
+                // disarm after one command (success or fail) and return to hotword mode
+                this._disarm();
             });
 
             // Reset inactivity timer so it doesn’t cut off while the request is in flight
@@ -211,6 +269,6 @@
         },
     };
 
-    // expose globally
+    // expose globally — do not change this export line
     global.VoiceChat = VoiceChat;
 })(window);
