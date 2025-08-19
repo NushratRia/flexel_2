@@ -342,9 +342,11 @@
   /* Quick buttons strip (to the left of the control panel) */
   #quickButtons {
     position: fixed; /* JS will set top/left */
-    display: flex; gap: 8px; 
-    z-index: 10000002;
+    display: flex; gap: 8px; z-index: 100002;
     pointer-events: none; /* so area stays click-through except buttons */
+    top: 16px; 
+    right: calc(10px + var(--tips-offset, 0px)); /* visible default */
+    left: auto; 
   }
   #quickButtons .qbtn {
     pointer-events: auto;
@@ -498,13 +500,13 @@
 
 
     <!-- Chat Toggle Button -->
-    <button id="toggleChatBtn">💬</button>
+    <!--button id="toggleChatBtn">💬</button-->
 
     <!-- Updated Chatbox -->
     <div id="voiceChatbox">
       <button id="hideChatBtn">×</button>
       <div id="voiceHeader">🎙 Voice Chat</div>
-      <div id="voiceTranscript">Say Flexee and then your command...</div>
+      <div id="voiceTranscript">Say 'Flexee' then the command...</div>
       <!--button id="micBtn">🎤</button-->
     </div>
 
@@ -578,6 +580,7 @@
 <script src="{{ url_for('static', filename='js/gestureActions.js') }}"></script>
 <script src="{{ url_for('static', filename='js/voicechat.js') }}"></script>
 <script src="{{ url_for('static', filename='js/hotwordBootstrap.js') }}"></script>
+<script src="{{ url_for('static', filename='js/quickButtons.js') }}"></script>
 
 
 
@@ -658,9 +661,8 @@
     
   });
   window.VoiceActions && window.VoiceActions.init(hot, container);
-  window.VoiceChat && window.VoiceChat.init(hot, container);   
-  window.HotwordBootstrap && window.HotwordBootstrap.init();    
-
+  window.VoiceChat && window.VoiceChat.init(hot, container);
+  window.HotwordBootstrap && window.HotwordBootstrap.init();
 
 
   function menuAction(action) {
@@ -1196,33 +1198,62 @@ function executeSortColumn(colLetter, direction) {
 
 
 
-// --- Position quick buttons next to the control panel ---
-  (function attachQuickButtons() {
-    const panel = document.getElementById('controlPanel');
-    const strip = document.getElementById('quickButtons');
+// --- Position quick buttons next to the control panel (always on-screen) ---
+(function attachQuickButtons() {
+  const panel = document.getElementById('controlPanel');
+  const strip = document.getElementById('quickButtons');
+  if (!panel || !strip) return;
 
-    if (!panel || !strip) return;
+  const GAP = 10;          // gap between strip and panel
+  const EDGE_GAP = 8;      // min distance from window edge
+  const SAFE_WIDTH = 72;   // fallback width if not measured yet
 
-    const GAP = 10;      // gap between buttons strip and the panel
-    const TOP_OFFSET = 2; // nudge to align visually with panel top
-
-    function place() {
+  function place() {
+    try {
       const r = panel.getBoundingClientRect();
-      const sw = strip.offsetWidth || 72; // rough width before first paint
-      // Place strip to the left of panel
-      strip.style.position = 'fixed';
-      strip.style.top  = `${Math.max(8, r.top + TOP_OFFSET)}px`;
-      strip.style.left = `${Math.max(8, r.left - sw - GAP)}px`;
-    }
+      const sw = strip.offsetWidth || SAFE_WIDTH;
 
-    // Place now and whenever layout shifts
-    place();
-    window.addEventListener('resize', place);
-    // If your app moves the panel later, re-place after next tick
-    new ResizeObserver(place).observe(panel);
-    // Small delayed place to catch first layout
-    setTimeout(place, 0);
-  })();
+      // Try to place to the LEFT of the panel first
+      let top  = Math.max(EDGE_GAP, r.top + 2);
+      let left = r.left - sw - GAP;
+
+      // If left-side placement would go off-screen, place to the RIGHT of the panel
+      if (left < EDGE_GAP) {
+        left = r.right + GAP;
+      }
+
+      // Clamp within viewport
+      const vw = Math.max(document.documentElement.clientWidth, window.innerWidth || 0);
+      const vh = Math.max(document.documentElement.clientHeight, window.innerHeight || 0);
+      left = Math.min(Math.max(EDGE_GAP, left), vw - sw - EDGE_GAP);
+      top  = Math.min(Math.max(EDGE_GAP, top), vh - strip.offsetHeight - EDGE_GAP);
+
+      // Apply
+      strip.style.position = 'fixed';
+      strip.style.top  = `${top}px`;
+      strip.style.left = `${left}px`;
+      strip.style.right = 'auto';
+      strip.style.display = 'flex';
+      strip.setAttribute('aria-hidden', 'false');
+    } catch (e) {
+      // Fallback: visible default (top-right), CSS already covers this
+      strip.style.left = 'auto';
+      strip.style.right = `calc(16px + var(--tips-offset, 0px))`;
+      strip.style.top = '16px';
+      strip.style.display = 'flex';
+    }
+  }
+
+  // Initial placement after first paint + reflow-safe retries
+  requestAnimationFrame(place);
+  setTimeout(place, 0);
+  setTimeout(place, 100);
+
+  // Reposition on resize and when the panel moves
+  window.addEventListener('resize', place);
+  new ResizeObserver(place).observe(panel);
+})();
+
 
   // --- Voice toggle (reuses your existing VoiceChat if present) ---
   (function hookVoiceQuickButton(){
