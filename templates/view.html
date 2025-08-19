@@ -377,6 +377,60 @@
   #closeTipsBtn { border: 0; background: transparent; font-size: 18px; cursor: pointer; }
 
 
+  /* Blue titles/subtitles inside Tips */
+  #tipsPanel h1,
+  #tipsPanel h2,
+  #tipsPanel h3,
+  #tipsPanel h4 {
+    color: #F58800;
+  }
+
+  /* Collapsible UI */
+  #tipsPanel .tips-c-title {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    border-bottom: 2px solid rgba(11,95,255,0.15);
+    padding-bottom: .25rem;
+    margin-bottom: .5rem;
+    cursor: pointer;              /* click heading to toggle */
+  }
+
+  #tipsPanel .tips-c-toggle {
+    margin-left: auto;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: .25rem .25rem;
+  }
+
+  #tipsPanel .tips-c-title .twisty {
+    display: inline-block;
+    transition: transform 150ms ease;
+  }
+  #tipsPanel .tips-c-title:not(.collapsed) .twisty {
+    transform: rotate(90deg);   /* ▸ -> ▾ when open */
+  }
+
+  /* Keep images visible even when collapsed */
+  #tipsPanel .tips-c-images img,
+  #tipsPanel .tips-c-images figure {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: .25rem 0;
+  }
+
+  #tipsPanel .tips-c-content {
+    margin-top: .5rem;
+    margin-bottom: 1rem;
+  }
+
+
+
+
 
 
 
@@ -581,6 +635,7 @@
 <script src="{{ url_for('static', filename='js/voicechat.js') }}"></script>
 <script src="{{ url_for('static', filename='js/hotwordBootstrap.js') }}"></script>
 <script src="{{ url_for('static', filename='js/quickButtons.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tipsCollapsible.js') }}"></script>
 
 
 
