@@ -164,7 +164,10 @@
         _actionLabel(payload) {
         switch (payload?.action) {
             case 'select':   return `Selected ${payload.range}`;
-            case 'scroll':   return `Scrolled`;
+            case 'scroll': { // ⬅️ change this case
+            const tag = payload && payload._src ? ` [${payload._src}]` : '';
+            return `Scrolled${tag}`;
+            }
             case 'undo':     return 'Undo';
             case 'redo':     return 'Redo';
             case 'delete':   return `Cleared ${payload.range}`;
@@ -172,9 +175,8 @@
             case 'zoom':     return `Zoom ${payload.direction || ''}`.trim();
             case 'copy':     return `Copied ${payload.range || ''}`.trim();
             case 'paste':    return `Pasted ${payload.at || ''}`.trim();
-            // case 'autofill': return `Autofill ${payload.range}`;
             default:         return 'Done';
-        }
+            }
         },
 
         _commitTopGesture() {
@@ -266,18 +268,98 @@
             }
         });
 
+        // Header-aware prepass (probe into the sheet to get the true rc under the finger)
+        // Keeps your structure: only sets h.a1 when pinching a header.
+        {
+        const hot = this._hot;
+        if (hot) {
+            // A→Z, AA, AB...
+            const colLetters = (i) => { let n=i, s=''; do { s = String.fromCharCode(65+(n%26)) + s; n = Math.floor(n/26)-1; } while (n>=0); return s; };
+            const rowRange  = (r)=> `${colLetters(0)}${r+1}:${colLetters(hot.countCols()-1)}${r+1}`;
+            const colRange  = (c)=> { const L=colLetters(c); return `${L}1:${L}${hot.countRows()}`; };
+
+            const PROBE_PX_Y = 24; // how far below the column header to sample
+            const PROBE_PX_X = 24; // how far right of the row header to sample
+
+            handsInfo.forEach(h => {
+            if (!h.pinching) return;
+
+            const el = GU.elementAt(h.indexTip);
+            if (!el || !el.closest) return;
+
+            // Work in real screen pixels (GU.toScreenXY mirrors X for us)
+            const pt = GU.toScreenXY(h.indexTip);
+
+            // Helper: get td at a screen point, then rc
+            const tdAtXY = (x, y) => {
+                const el2 = document.elementFromPoint(
+                Math.max(0, Math.min(window.innerWidth - 1, x)),
+                Math.max(0, Math.min(window.innerHeight - 1, y))
+                );
+                const td = el2 && el2.closest ? el2.closest('td') : null;
+                if (!td) return null;
+                return (typeof hot.getCoords === 'function' ? hot.getCoords(td) : (GU.rcFromTD && GU.rcFromTD(td)));
+            };
+
+            // If on COLUMN header: sample a point a little *below* the header to hit the data cell
+            if (el.closest('.ht_clone_top')) {
+                const rc = tdAtXY(pt.x, pt.y + PROBE_PX_Y);
+                if (rc && Number.isInteger(rc.col)) {
+                const c = rc.col;
+                const range = colRange(c);
+                // synthesize h.a1 so your existing block runs (blue highlight + popup)
+                if (!h.a1) h.a1 = range;
+                }
+                return;
+            }
+
+            // If on ROW header: sample a point a little *right* into the sheet to hit the data cell
+            if (el.closest('.ht_clone_left')) {
+                const rc = tdAtXY(pt.x + PROBE_PX_X, pt.y);
+                if (rc && Number.isInteger(rc.row)) {
+                const r = rc.row;
+                const range = rowRange(r);
+                if (!h.a1) h.a1 = range;
+                }
+                return;
+            }
+
+            // else: normal cells already set h.a1 upstream; do nothing
+            });
+        }
+        }
+
+
+
+
+
         // ---- 1) SELECT (pinch on a cell) ----
         handsInfo.forEach(h => {
-            if (h.pinching && h.a1) {
+        if (h.pinching && h.a1) {
             GU.rank(this._score, 'select', 0.92, {
-                action: 'select', range: h.a1, _source: 'pinch', ptScreen: GU.toScreenXY(h.indexTip)
+            action: 'select', range: h.a1, _source: 'pinch', ptScreen: GU.toScreenXY(h.indexTip)
             });
             this._copyArmed = true;
             this._twoHandStartRC = this._twoHandStartRC || h.rc;
-            // cancel paste intent only when a real select occurred
             this._pasteArmed = false;
-            }
+        }
         });
+
+
+
+
+        // ---- 1) SELECT (pinch on a cell) ----
+        // handsInfo.forEach(h => {
+        //     if (h.pinching && h.a1) {
+        //     GU.rank(this._score, 'select', 0.92, {
+        //         action: 'select', range: h.a1, _source: 'pinch', ptScreen: GU.toScreenXY(h.indexTip)
+        //     });
+        //     this._copyArmed = true;
+        //     this._twoHandStartRC = this._twoHandStartRC || h.rc;
+        //     // cancel paste intent only when a real select occurred
+        //     this._pasteArmed = false;
+        //     }
+        // });
 
         // ---- 2) SCROLL (open palm swipe up/down) ----
         handsInfo.forEach(h => {
@@ -293,6 +375,7 @@
 
                 GU.rank(this._score, 'scroll', 0.75 + 0.25 * mag, {
                 action: 'scroll',
+                // _src: 'vy', // ⬅️ tag old path
                 row: nextRow + 1,
                 col: (anchor[1] || 0) + 1,
                 ptScreen: GU.toScreenXY(h.indexTip)
@@ -304,118 +387,118 @@
             }
         });
 
-        // ---- 3) UNDO / 4) REDO (horizontal swipe with open palm) ----
-        handsInfo.forEach(h => {
-            const s = this._swipe[h.idx];
-            if (!h.openPalm || !s || !s.active) return;
+        // // ---- 3) UNDO / 4) REDO (horizontal swipe with open palm) ----
+        // handsInfo.forEach(h => {
+        //     const s = this._swipe[h.idx];
+        //     if (!h.openPalm || !s || !s.active) return;
 
-            const dt = (s.t - s.t0);
-            if (dt < this._SWIPE_MIN_MS || dt > this._SWIPE_MAX_MS) return;
+        //     const dt = (s.t - s.t0);
+        //     if (dt < this._SWIPE_MIN_MS || dt > this._SWIPE_MAX_MS) return;
 
-            const dx = s.x - s.x0;  // horizontal travel
-            const dy = s.y - s.y0;  // vertical drift
+        //     const dx = s.x - s.x0;  // horizontal travel
+        //     const dy = s.y - s.y0;  // vertical drift
 
-            if (Math.abs(dy) > this._SWIPE_MAX_VERT) return;   // too vertical
-            if (Math.abs(dx) < this._SWIPE_MIN_D) return;      // not far enough
+        //     if (Math.abs(dy) > this._SWIPE_MAX_VERT) return;   // too vertical
+        //     if (Math.abs(dx) < this._SWIPE_MIN_D) return;      // not far enough
 
-            const strength = Math.min(1, (Math.abs(dx) - this._SWIPE_MIN_D) / 0.25);
-            const score = 0.85 + 0.15 * strength;
+        //     const strength = Math.min(1, (Math.abs(dx) - this._SWIPE_MIN_D) / 0.25);
+        //     const score = 0.85 + 0.15 * strength;
 
-            this._pasteArmed = false; // cancel any pending paste intent
-            GU.rank(this._score, dx < 0 ? 'undo' : 'redo', score, {
-            action: dx < 0 ? 'undo' : 'redo',
-            ptScreen: GU.toScreenXY(h.indexTip)
-            });
+        //     this._pasteArmed = false; // cancel any pending paste intent
+        //     GU.rank(this._score, dx < 0 ? 'undo' : 'redo', score, {
+        //     action: dx < 0 ? 'undo' : 'redo',
+        //     ptScreen: GU.toScreenXY(h.indexTip)
+        //     });
 
-            // reset this hand's swipe to avoid multiple triggers from one stroke
-            this._swipe[h.idx] = { active: false };
-        });
+        //     // reset this hand's swipe to avoid multiple triggers from one stroke
+        //     this._swipe[h.idx] = { active: false };
+        // });
 
-        // ---- 5) DELETE (selection + downward flick) ----
-        {
-            const sel = this._hot.getSelectedLast();
-            if (sel) {
-            handsInfo.forEach(h => {
-                const vy = h.k.vy;
-                const mag = Math.min(1, Math.max(0, vy) * 1400);
-                if (mag > 0.8) {
-                const range = this._a1FromSel(sel);
-                GU.rank(this._score, 'delete', 0.82 + 0.18 * mag, {
-                    action: 'delete', range, ptScreen: GU.toScreenXY(h.indexTip)
-                });
-                }
-            });
-            }
-        }
+        // // ---- 5) DELETE (selection + downward flick) ----
+        // {
+        //     const sel = this._hot.getSelectedLast();
+        //     if (sel) {
+        //     handsInfo.forEach(h => {
+        //         const vy = h.k.vy;
+        //         const mag = Math.min(1, Math.max(0, vy) * 1400);
+        //         if (mag > 0.8) {
+        //         const range = this._a1FromSel(sel);
+        //         GU.rank(this._score, 'delete', 0.82 + 0.18 * mag, {
+        //             action: 'delete', range, ptScreen: GU.toScreenXY(h.indexTip)
+        //         });
+        //         }
+        //     });
+        //     }
+        // }
 
-        // ---- 6) MERGE (two hands collide while both are over cells) ----
-        if (handsInfo.length >= 2) {
-            const [h0, h1] = handsInfo;
-            if (h0.rc && h1.rc) {
-            const dist = GU.dist(h0.indexTip, h1.indexTip);
-            if (this._twoHandPrevDist != null && dist < 0.06 && this._twoHandPrevDist > dist) {
-                const range = GU.a1Rect(h0.rc, h1.rc);
-                GU.rank(this._score, 'merge', 0.9, { action: 'merge', range, ptScreen: GU.toScreenXY(h0.indexTip) });
-            }
-            this._twoHandPrevDist = dist;
-            }
-        } else {
-            this._twoHandPrevDist = null;
-        }
+        // // ---- 6) MERGE (two hands collide while both are over cells) ----
+        // if (handsInfo.length >= 2) {
+        //     const [h0, h1] = handsInfo;
+        //     if (h0.rc && h1.rc) {
+        //     const dist = GU.dist(h0.indexTip, h1.indexTip);
+        //     if (this._twoHandPrevDist != null && dist < 0.06 && this._twoHandPrevDist > dist) {
+        //         const range = GU.a1Rect(h0.rc, h1.rc);
+        //         GU.rank(this._score, 'merge', 0.9, { action: 'merge', range, ptScreen: GU.toScreenXY(h0.indexTip) });
+        //     }
+        //     this._twoHandPrevDist = dist;
+        //     }
+        // } else {
+        //     this._twoHandPrevDist = null;
+        // }
 
-        // ---- 7) ZOOM IN/OUT (two-hand pinch/expand) ----
-        if (handsInfo.length >= 2) {
-            const [a, b] = handsInfo;
-            const d = GU.dist(a.indexTip, b.indexTip);
-            if (this._zoomLastDist == null) this._zoomLastDist = d;
-            const delta = d - this._zoomLastDist;
-            const mag = Math.min(1, Math.abs(delta) * 16);
-            if (mag > 0.25) {
-            if (delta > 0) GU.rank(this._score, 'zoomIn', 0.75 + 0.25 * mag, {
-                action: 'zoom', direction: 'in', step: 0.1 + 0.2 * mag, ptScreen: GU.toScreenXY(a.indexTip)
-            });
-            else GU.rank(this._score, 'zoomOut', 0.75 + 0.25 * mag, {
-                action: 'zoom', direction: 'out', step: 0.1 + 0.2 * mag, ptScreen: GU.toScreenXY(a.indexTip)
-            });
-            }
-            this._zoomLastDist = d;
-        } else {
-            this._zoomLastDist = null;
-        }
+        // // ---- 7) ZOOM IN/OUT (two-hand pinch/expand) ----
+        // if (handsInfo.length >= 2) {
+        //     const [a, b] = handsInfo;
+        //     const d = GU.dist(a.indexTip, b.indexTip);
+        //     if (this._zoomLastDist == null) this._zoomLastDist = d;
+        //     const delta = d - this._zoomLastDist;
+        //     const mag = Math.min(1, Math.abs(delta) * 16);
+        //     if (mag > 0.25) {
+        //     if (delta > 0) GU.rank(this._score, 'zoomIn', 0.75 + 0.25 * mag, {
+        //         action: 'zoom', direction: 'in', step: 0.1 + 0.2 * mag, ptScreen: GU.toScreenXY(a.indexTip)
+        //     });
+        //     else GU.rank(this._score, 'zoomOut', 0.75 + 0.25 * mag, {
+        //         action: 'zoom', direction: 'out', step: 0.1 + 0.2 * mag, ptScreen: GU.toScreenXY(a.indexTip)
+        //     });
+        //     }
+        //     this._zoomLastDist = d;
+        // } else {
+        //     this._zoomLastDist = null;
+        // }
 
-        // ---- 8) COPY (pinch selection + other hand closed fist) ----
-        if (this._copyArmed && handsInfo.length >= 2) {
-            const pinchHand = handsInfo.find(h => h.pinching && h.a1);
-            const fistHand = handsInfo.find(h => h.closedFist);
-            if (pinchHand && fistHand) {
-            const range = this._hot.getSelectedLast()
-                ? this._a1FromSel(this._hot.getSelectedLast())
-                : pinchHand.a1;
-            GU.rank(this._score, 'copy', 0.9, { action: 'copy', range, ptScreen: GU.toScreenXY(pinchHand.indexTip) });
-            this._pasteArmed = true;     // allow paste next
-            this._copyArmed = false;
+        // // ---- 8) COPY (pinch selection + other hand closed fist) ----
+        // if (this._copyArmed && handsInfo.length >= 2) {
+        //     const pinchHand = handsInfo.find(h => h.pinching && h.a1);
+        //     const fistHand = handsInfo.find(h => h.closedFist);
+        //     if (pinchHand && fistHand) {
+        //     const range = this._hot.getSelectedLast()
+        //         ? this._a1FromSel(this._hot.getSelectedLast())
+        //         : pinchHand.a1;
+        //     GU.rank(this._score, 'copy', 0.9, { action: 'copy', range, ptScreen: GU.toScreenXY(pinchHand.indexTip) });
+        //     this._pasteArmed = true;     // allow paste next
+        //     this._copyArmed = false;
 
-            // expire paste window after 3s
-            clearTimeout(this._pasteExpiry);
-            this._pasteExpiry = setTimeout(() => { this._pasteArmed = false; }, 3000);
-            }
-        }
+        //     // expire paste window after 3s
+        //     clearTimeout(this._pasteExpiry);
+        //     this._pasteExpiry = setTimeout(() => { this._pasteArmed = false; }, 3000);
+        //     }
+        // }
 
-        // ---- 9) PASTE (closed fist -> open palm near target cell) ----
-        if (this._pasteArmed) {
-            const opener = handsInfo.find(h => h.openPalm && h.a1);
-            if (opener) {
-            // require still hand to avoid swipes firing paste; and no editor open
-            const still = Math.abs(opener.k.vx) * 1200 < 0.2 && Math.abs(opener.k.vy) * 1200 < 0.2;
-            if (still && !this._isEditorOpen()) {
-                GU.rank(this._score, 'paste', 0.9, {
-                action: 'paste', at: opener.a1, ptScreen: GU.toScreenXY(opener.indexTip)
-                });
-                this._pasteArmed = false;
-                clearTimeout(this._pasteExpiry);
-            }
-            }
-        }
+        // // ---- 9) PASTE (closed fist -> open palm near target cell) ----
+        // if (this._pasteArmed) {
+        //     const opener = handsInfo.find(h => h.openPalm && h.a1);
+        //     if (opener) {
+        //     // require still hand to avoid swipes firing paste; and no editor open
+        //     const still = Math.abs(opener.k.vx) * 1200 < 0.2 && Math.abs(opener.k.vy) * 1200 < 0.2;
+        //     if (still && !this._isEditorOpen()) {
+        //         GU.rank(this._score, 'paste', 0.9, {
+        //         action: 'paste', at: opener.a1, ptScreen: GU.toScreenXY(opener.indexTip)
+        //         });
+        //         this._pasteArmed = false;
+        //         clearTimeout(this._pasteExpiry);
+        //     }
+        //     }
+        // }
 
         // ---- 10) AUTOFILL (drag diagonal from a selected seed) ----
         // {
