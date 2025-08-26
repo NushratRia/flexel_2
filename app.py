@@ -11,6 +11,7 @@ import google_auth_oauthlib.flow
 import googleapiclient.discovery
 import logging
 from gpt_command_handler import process_command
+import pandas as pd
 
 
 # Configure logging
@@ -168,6 +169,65 @@ def voice_command():
     result = process_command(transcript)  # dict
     status = result.get("status", 200) if "error" in result else 200
     return jsonify(result), status
+
+
+
+@app.get("/api/all-sheets")
+def api_all_sheets():
+    src = request.args.get("csv_url", "")
+    if not src:
+        return jsonify({"sheets": []})
+
+    try:
+        # --- Case 1: direct .xlsx ---
+        if src.lower().endswith((".xlsx", ".xlsm", ".xls")):
+            resp = requests.get(src, timeout=20); resp.raise_for_status()
+            with io.BytesIO(resp.content) as fh:
+                xl = pd.ExcelFile(fh)
+                sheets = []
+                for name in xl.sheet_names:
+                    df = xl.parse(name, dtype=str).fillna("")
+                    headers = list(df.columns)
+                    rows = df.astype(str).values.tolist()
+                    sheets.append({"name": name, "headers": headers, "rows": rows})
+                return jsonify({"sheets": sheets})
+
+        # --- Case 2: Google Sheets link (public) ---
+        # Expect a URL containing /spreadsheets/d/<ID> ; use "gviz" to list sheets
+        if "spreadsheets/d/" in src:
+            import re, json
+            m = re.search(r"/spreadsheets/d/([a-zA-Z0-9-_]+)", src)
+            if not m:
+                return jsonify({"sheets": []})
+            doc_id = m.group(1)
+
+            # Get metadata & sheet gids
+            meta_url = f"https://docs.google.com/spreadsheets/d/{doc_id}/gviz/tq?gid=0"
+            # The metadata JSON is inside JS — we only need sheet list; a light-weight parse:
+            # (Many deployments store known GIDs; if you already have auth, swap to Sheets API.)
+            html = requests.get(meta_url, timeout=20).text
+            # naive scrape for gids/names (works for public sheets)
+            gids = re.findall(r"gid\\x3d(\d+)", html)
+            gids = list(dict.fromkeys(gids))  # unique preserve order
+
+            sheets = []
+            for gid in gids:
+                csv_url = f"https://docs.google.com/spreadsheets/d/{doc_id}/export?format=csv&gid={gid}"
+                df = pd.read_csv(csv_url, dtype=str).fillna("")
+                headers = list(df.columns)
+                rows = df.astype(str).values.tolist()
+                sheets.append({"name": f"Sheet {len(sheets)+1}", "headers": headers, "rows": rows})
+            return jsonify({"sheets": sheets})
+
+        # --- Case 3: single CSV (no multi-sheet) — return just the current one
+        df = pd.read_csv(src, dtype=str).fillna("")
+        headers = list(df.columns)
+        rows = df.astype(str).values.tolist()
+        return jsonify({"sheets": [{"name": "Sheet 1", "headers": headers, "rows": rows}]})
+
+    except Exception as e:
+        print("all-sheets error:", e)
+        return jsonify({"sheets": []})
 
 
 

@@ -429,6 +429,35 @@
   }
 
 
+  .twoPinchAnchor {
+    position: fixed; width: 16px; height: 16px;
+    border-radius: 50%; border: 2px solid rgba(0,128,255,.9);
+    background: rgba(0,128,255,.25); pointer-events: none; z-index: 100003;
+    transform: translate(-50%,-50%);
+  }
+
+
+
+
+  /* Tips: hover-GIF grid */
+  #tipsPanel .tips-gif-grid{
+    display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr));
+    gap:10px; margin:.5rem 0 1rem;
+  }
+  #tipsPanel .tip-gif{
+    position:relative; overflow:hidden; border:1px solid #eee; border-radius:8px;
+    background:#fafafa;
+  }
+  #tipsPanel .tip-gif img{ width:100%; display:block; }
+  #tipsPanel .tip-gif .caption{
+    position:absolute; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,.72); color:#fff; font-size:11px; line-height:1.25;
+    padding:4px 6px; opacity:0; transform:translateY(6px);
+    transition:opacity .15s ease, transform .15s ease;
+  }
+  #tipsPanel .tip-gif:hover .caption{ opacity:1; transform:translateY(0); }
+
+
 
 
 
@@ -590,8 +619,8 @@
     <h4>🎙 Voice Mode</h4>
     <p>Control the sheet using your voice:</p>
     <ul>
-      <li>Click the <strong>🎙</strong> button.</li>
-      <li>Press <em>Speak</em> and say your command (e.g., “sort column A”).</li>
+      <li>Say 'Flexee'.</li>
+      <li>And say your command (e.g., “sort column A”).</li>
       <li>The system will execute the task hands-free.</li>
     </ul>
 
@@ -600,15 +629,73 @@
     <ul>
       <li><strong>Selecting</strong>: Pinch fingers together on the target cell.</li>
       <li><strong>Scrolling</strong>: Swipe up/down.</li>
-      <li><strong>Undo</strong>: Long swipe left with an open palm.</li>
-      <li><strong>Redo</strong>: Long swipe right with an open palm.</li>
+      <!--li><strong>Undo</strong>: Long swipe left with an open palm.</li>
+      <li><strong>Redo</strong>: Long swipe right with an open palm.</li-->
       <li><strong>Delete</strong>: Select then flick downward.</li>
       <li><strong>Merge</strong>: Select with two hands and collide them.</li>
       <li><strong>Zoom In/Out</strong>: Standard pinch-to-zoom gesture using all fingers.</li>
       <li><strong>Copy</strong>: Pinch to select data, then close the other fist.</li>
       <li><strong>Paste</strong>: Open fist.</li>
     </ul>
-    <img src="/static/img/tool_tip.png" alt="Tool tips" style="width:100%; max-width:100%; height:auto; display:block; margin:0 auto;">
+    <!--img src="/static/img/tool_tip.png" alt="Tool tips" style="width:100%; max-width:100%; height:auto; display:block; margin:0 auto;"-->
+    <div class="tips-gif-grid">
+    <figure class="tip-gif">
+      <img class="gif-hover" loading="lazy"
+          data-still="/static/img/gifs/pinch.png"
+          data-gif="/static/gifs/selecting.gif"
+          alt="Pinch to select">
+      <figcaption class="caption">Pinch → Select cell / row / column</figcaption>
+    </figure>
+
+    <figure class="tip-gif">
+      <img class="gif-hover" loading="lazy"
+          data-still="/static/img/gifs/open.png"
+          data-gif="/static/gifs/scrolling.gif"
+          alt="Scroll">
+      <figcaption class="caption">Swipe → Scroll (up/down/left/right)</figcaption>
+    </figure>
+
+    <figure class="tip-gif">
+      <img class="gif-hover" loading="lazy"
+          data-still="/static/img/gifs/flick.png"
+          data-gif="/static/gifs/delete_2.gif"
+          alt="Delete by flick">
+      <figcaption class="caption">Flick down (below midline) → Delete target</figcaption>
+    </figure>
+
+    <figure class="tip-gif">
+      <img class="gif-hover" loading="lazy"
+          data-still="/static/img/gifs/zoom.png"
+          data-gif="/static/gifs/zoom.gif"
+          alt="Zoom in">
+      <figcaption class="caption">Thumb–middle apart → Zoom In, Thumb–middle close → Zoom Out</figcaption>
+    </figure>
+
+    <figure class="tip-gif">
+      <img class="gif-hover" loading="lazy"
+          data-still="/static/img/gifs/collide.png"
+          data-gif="/static/gifs/merging.gif"
+          alt="Zoom out">
+      <figcaption class="caption">Pinches collide → Merge</figcaption>
+    </figure>
+
+    <figure class="tip-gif">
+      <img class="gif-hover" loading="lazy"
+          data-still="/static/img/gifs/copy.png"
+          data-gif="/static/gifs/copying.gif"
+          alt="Copy">
+      <figcaption class="caption">Pinch select & other fist → Copy</figcaption>
+    </figure>
+
+    <figure class="tip-gif">
+      <img class="gif-hover" loading="lazy"
+          data-still="/static/img/gifs/paste.png"
+          data-gif="/static/gifs/pasting.gif"
+          alt="Paste">
+      <figcaption class="caption">Open fist → Paste</figcaption>
+    </figure>
+  </div>
+
     
     <!--p style="font-size:12px; color:#666">(*Sketches will be attached for each gesture.)</p-->
 
@@ -628,29 +715,68 @@
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.min.js"></script>
-<script src="{{ url_for('static', filename='js/gestureHighlight_debug.js') }}"></script>
-<script src="{{ url_for('static', filename='js/voiceActions.js') }}"></script>
+<!--script src="{{ url_for('static', filename='js/gestureHighlight_debug.js') }}"></script>
 <script src="{{ url_for('static', filename='js/gestureUtils.js') }}"></script>
 <script src="{{ url_for('static', filename='js/gestureActions.js') }}"></script>
-<!-- global cooldown + ranking arbiter -->
 <script src="{{ url_for('static', filename='js/gestureArbiter500.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voiceActions.js') }}"></script>
 <script src="{{ url_for('static', filename='js/voicechat.js') }}"></script>
 <script src="{{ url_for('static', filename='js/hotwordBootstrap.js') }}"></script>
 <script src="{{ url_for('static', filename='js/quickButtons.js') }}"></script>
 <script src="{{ url_for('static', filename='js/tipsCollapsible.js') }}"></script>
 
-<script src="{{ url_for('static', filename='js/deicticTarget.js') }}"></script>
+<script src="{{ url_for('static', filename='js/deicticTargetBothHands.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bimanualPinchSelect.js') }}"></script>
 <script src="{{ url_for('static', filename='js/deicticPatches.js') }}"></script>
 <script src="{{ url_for('static', filename='js/voiceDeicticMiddleware.js') }}"></script>
 <script src="{{ url_for('static', filename='js/deicticHud.js') }}"></script>
 <script src="{{ url_for('static', filename='js/deicticActionsBridge.js') }}"></script>
-<!-- New: Python-style scroll adapter -->
+
 <script src="{{ url_for('static', filename='js/gestureScrollDelta.js') }}"></script>
-<!-- New: Delete (pinch + downward flick) -->
+
 <script src="{{ url_for('static', filename='js/gestureDeleteFlick.js') }}"></script>
 <script src="{{ url_for('static', filename='js/gestureDeleteBinHud.js') }}"></script>
-<!-- New: Zoom via thumb–middle spread -->
+
 <script src="{{ url_for('static', filename='js/gestureZoomThumbMiddle.js') }}"></script>
+<script src="{{ url_for('static', filename='js/multiSheetFetch.js') }}"></script>
+<script src="{{ url_for('static', filename='js/multiSheetTabs.js') }}"></script-->
+
+
+
+<script src="{{ url_for('static', filename='js/gestureUtils.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gestureActions.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gestureArbiter500.js') }}"></script>
+
+<!-- Debug overlay (optional) -->
+<script src="{{ url_for('static', filename='js/gestureHighlight_debug.js') }}"></script>
+
+<!-- Voice + hotword -->
+<script src="{{ url_for('static', filename='js/voicechat.js') }}"></script>
+<script src="{{ url_for('static', filename='js/hotwordBootstrap.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voiceActions.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voiceDeicticMiddleware.js') }}"></script>
+
+<!-- Quick UI helpers -->
+<script src="{{ url_for('static', filename='js/quickButtons.js') }}"></script>
+<script src="{{ url_for('static', filename='js/tipsCollapsible.js') }}"></script>
+
+<!-- Deictic + multimodal selection -->
+<script src="{{ url_for('static', filename='js/deicticTargetBothHands.js') }}"></script>
+<script src="{{ url_for('static', filename='js/bimanualPinchSelect.js') }}"></script>
+<script src="{{ url_for('static', filename='js/deicticPatches.js') }}"></script>
+<script src="{{ url_for('static', filename='js/deicticHud.js') }}"></script>
+<script src="{{ url_for('static', filename='js/deicticActionsBridge.js') }}"></script>
+
+<!-- Extended gestures -->
+<script src="{{ url_for('static', filename='js/gestureScrollDelta.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gestureDeleteFlick.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gestureDeleteBinHud.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gestureZoomThumbMiddle.js') }}"></script>
+
+<!-- Multi-sheet -->
+<script src="{{ url_for('static', filename='js/multiSheetFetch.js') }}"></script>
+<script src="{{ url_for('static', filename='js/multiSheetTabs.js') }}"></script>
+
 
 
 
@@ -734,6 +860,8 @@
   window.VoiceActions && window.VoiceActions.init(hot, container);
   window.VoiceChat && window.VoiceChat.init(hot, container);
   window.HotwordBootstrap && window.HotwordBootstrap.init();
+
+  window.MultiSheetTabs && window.MultiSheetTabs.init(hot);
 
 
   function menuAction(action) {
@@ -1398,6 +1526,102 @@ function executeSortColumn(colLetter, direction) {
       if (tipsPanel.classList.contains('open')) applyOffset(true);
     }).observe(tipsPanel);
   })();
+
+
+
+
+
+
+  window.hot   = hot;                        // the Handsontable instance
+  window.hands = hands;                      // the Mediapipe Hands instance
+
+  // Init Voice execution + chat UI
+  if (window.VoiceActions) {
+    VoiceActions.init(window.hot, hot.rootElement || document.getElementById('hot'));
+  }
+  if (window.VoiceChat) {
+    VoiceChat.init(window.hot, hot.rootElement || document.getElementById('hot'));
+  }
+
+  // Kick off hotword bootstrap if available
+  if (window.HotwordBootstrap && HotwordBootstrap.init) {
+    HotwordBootstrap.init();
+  }
+
+  // Optional: passive hotword UI logger
+  if (window.HotwordVoice && HotwordVoice.init) {
+    HotwordVoice.init(window.hot, hot.rootElement || document.getElementById('hot'));
+  }
+
+  // Optional: multi-sheet tabs
+  if (window.MultiSheetTabs && MultiSheetTabs.init) {
+    MultiSheetTabs.init(window.hot);
+  }
+
+
+
+
+
+
+
+
+
+
+
+  (function () {
+    // Only run if bimanual module is present
+    if (!window.GestureUtils || !window.GestureActions) return;
+
+    let anchorDot = null, anchorExpires = 0;
+
+    function showAnchorAt(screenPt, ttlMs = 800) {
+      if (!anchorDot) {
+        anchorDot = document.createElement('div');
+        anchorDot.className = 'twoPinchAnchor';
+        document.body.appendChild(anchorDot);
+      }
+      anchorDot.style.left = Math.round(screenPt.x) + 'px';
+      anchorDot.style.top  = Math.round(screenPt.y) + 'px';
+      anchorDot.style.display = 'block';
+      anchorExpires = performance.now() + ttlMs;
+      requestAnimationFrame(tick);
+    }
+    function hideAnchor() { if (anchorDot) anchorDot.style.display = 'none'; }
+    function tick() {
+      if (performance.now() > anchorExpires) { hideAnchor(); return; }
+      requestAnimationFrame(tick);
+    }
+
+    // Subscribe non‑destructively to the same Mediapipe stream
+    const GA = window.GestureActions;
+    const GU = window.GestureUtils;
+    const hands = GA && GA._hands;
+    if (!hands || typeof GU.multiplexOnResults !== 'function') return;
+    GU.multiplexOnResults(hands);
+
+    // Heuristic: when the FIRST pinch happens (no current HOT selection span),
+    // draw the anchor dot at the fingertip; hide it once a multi‑cell range appears.
+    hands.onResults((res) => {
+      if (!res.multiHandLandmarks || !res.multiHandLandmarks.length || !GA._hot) return;
+      const hot = GA._hot;
+      const sel = hot.getSelectedLast();
+      const hasSpan = sel && (Math.abs(sel[0] - sel[2]) + Math.abs(sel[1] - sel[3]) > 0);
+
+      // If we have a real span (i.e., after the second pinch), hide the anchor
+      if (hasSpan) { hideAnchor(); return; }
+
+      // Otherwise, show anchor when a pinch is detected
+      for (const lm of res.multiHandLandmarks) {
+        if (GU.isPinching(lm)) {
+          const pt = GU.toScreenXY(lm[8]); // index tip
+          showAnchorAt(pt, 1200);          // brief “anchor” cue
+          break;
+      }
+    }
+  });
+})();
+
+
 
 
 
