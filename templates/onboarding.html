@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flexee • Onboarding</title>
+  <style>
+    :root{
+      /* Light, modern theme */
+      --bg:#f7f9fc; --panel:#ffffff; --muted:#6b7280; --text:#0f172a;
+      --acc:#3b82f6; --good:#10b981; --warn:#f59e0b; --bad:#ef4444;
+      --ring: 0 0 0 6px rgba(59,130,246,.14);
+      --shadow: 0 10px 28px rgba(15,23,42,.08);
+      --radius: 18px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0; font-family:Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial; background:var(--bg); color:var(--text)}
+
+    /* Top tips bar (fixed) */
+    .tooltips-bar{position:fixed; top:0; left:0; right:0; height:56px; display:flex; align-items:center; gap:12px; padding:0 18px;
+      background:rgba(255,255,255,.85); backdrop-filter: blur(8px); border-bottom:1px solid rgba(2,6,23,.06); z-index:20}
+    .badge{font-size:12px; padding:6px 10px; border-radius:999px; background:rgba(59,130,246,.12); color:#1d4ed8; border:1px solid rgba(59,130,246,.25)}
+
+    /* Voice bar (fixed, always listening) */
+    .voice-bar{position:fixed; left:50%; transform:translateX(-50%); bottom:16px; display:flex; align-items:center; gap:10px; padding:10px 14px;
+      background:rgba(255,255,255,.9); backdrop-filter: blur(8px); border:1px solid rgba(2,6,23,.06); border-radius:999px; box-shadow:var(--shadow); z-index:30}
+    .vled{width:10px; height:10px; border-radius:50%; background:#9ca3af}
+    .vled.hotword{background:#3b82f6}
+    .vled.command{background:#10b981}
+    .vtext{min-width:300px; max-width:56vw; color:var(--muted); font-size:13px}
+
+    /* Layout */
+    .wrap{max-width:1280px; margin:96px auto 120px; padding:0 20px;}
+    .grid{display:grid; grid-template-columns: 320px 1fr; gap:18px}
+    .panel{background:var(--panel); border:1px solid rgba(2,6,23,.06); border-radius:var(--radius); box-shadow:var(--shadow)}
+
+    /* Tasks (left) */
+    .tasks{padding:18px}
+    .tasks h2{margin:0 0 8px; font-size:18px}
+    .tasks p{margin:0 0 14px; color:var(--muted); font-size:13px}
+
+    /* Each task row: dot | text (text column resilient) */
+    /* Make each task row use flex instead of grid */
+    /* --- spacing & card feel --- */
+    .task{
+      display:flex;                /* from previous fix */
+      align-items:flex-start;
+      gap:12px;
+      padding:14px 16px;
+      margin-bottom:16px;          /* space between tasks */
+      background:#fff;
+      border:1px dashed rgba(2,6,23,.12);
+      border-radius:14px;
+      box-shadow:0 1px 0 rgba(2,6,23,.03);
+      transition:box-shadow .15s ease, transform .15s ease;
+    }
+    .task:hover{ box-shadow:0 6px 20px rgba(15,23,42,.06); transform:translateY(-1px); }
+
+    .task .dot{ flex:0 0 22px; margin-top:2px; }
+    .task > div:nth-child(2){
+      flex:1 1 auto;
+      min-width:0;
+      white-space:normal;
+      overflow-wrap:anywhere;
+      word-break:normal;
+      hyphens:auto;
+    }
+    .task b{ display:block; font-size:14px; margin:0 0 6px; }
+
+    /* --- brighter pastel for completed --- */
+    :root{
+      --done1:#c9f2e4;   /* minty pastel */
+      --done2:#ecfff8;   /* very light bottom fade */
+      --doneBorder: rgba(16,185,129,.55);
+    }
+    .task.done{
+      background:linear-gradient(180deg, var(--done1), var(--done2));
+      border-color:var(--doneBorder);
+    }
+    .task.done .dot{
+      background:#10b981;
+      border-color:#059669;
+      color:#fff;
+    }
+
+    .task small{display:block; color:var(--muted); line-height:1.35}
+
+    .cta{margin-top:12px; display:flex; gap:8px}
+    .btn{appearance:none; border:none; padding:10px 12px; border-radius:12px; cursor:pointer; color:var(--text); background:#eef2ff; border:1px solid rgba(59,130,246,.25)}
+    .btn.ghost{background:#fff}
+    .btn.primary{background:linear-gradient(180deg,#3b82f6,#2563eb); color:white; border-color:#2563eb}
+
+    /* Board (right) */
+    .board{position:relative; padding:14px}
+    .board-head{display:flex; align-items:center; justify-content:space-between; padding:10px 12px; background:#fff; border:1px solid rgba(2,6,23,.06); border-radius:14px}
+    .board-head h3{margin:0; font-size:14px; letter-spacing:.3px; color:#1f2937}
+    .trash{display:flex; align-items:center; gap:8px; color:#475569}
+    .trash .bin{width:28px; height:28px; border-radius:10px; display:grid; place-items:center; border:1px solid rgba(2,6,23,.12); background:#fff}
+
+    /* Camera overlay + arena */
+    .sheet{margin-top:12px; height:560px; border-radius:14px; border:1px solid rgba(2,6,23,.06); background:#ffffff; overflow:auto; position:relative;}
+    .cam{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.12; filter:grayscale(100%); mix-blend-mode:multiply; pointer-events:none; transform:scaleX(-1);}
+
+    /* Shapes: soft pastel colors */
+    .arena{position:relative; min-height:900px; padding:24px; display:grid; grid-template-columns: repeat(6, minmax(120px, 1fr)); gap:16px}
+    .shape{position:relative; display:grid; place-items:center; height:120px; border-radius:18px; user-select:none; cursor:pointer;
+      background:linear-gradient(180deg, rgba(2,6,23,.02), rgba(2,6,23,.045));
+      border:1px solid rgba(2,6,23,.06); transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease}
+    .shape .label{font-size:12px; color:#334155}
+    .shape svg{width:58px; height:58px}
+    .shape[data-selected="true"]{outline:2px solid var(--acc); box-shadow:var(--ring); transform:translateY(-2px); border-color:rgba(59,130,246,.35)}
+    /* Blank tile when deleted */
+.shape[data-deleted="true"]{
+  opacity:1;                 /* no faded look */
+  filter:none;
+  background:#fff;           /* plain blank */
+  border:1px dashed rgba(2,6,23,.18);
+  box-shadow:none;
+  outline:none;
+}
+.shape[data-deleted="true"] svg,
+.shape[data-deleted="true"] .label{
+  display:none;              /* hide content */
+}
+    .shape.target{border-color:rgba(245,158,11,.45); box-shadow:0 0 0 8px rgba(245,158,11,.12)}
+    .dragging{opacity:.6}
+
+    /* Toast + confetti */
+    .toast{position:fixed; top:64px; right:20px; padding:10px 14px; background:#111827; color:#e5e7eb; border:1px solid rgba(255,255,255,.1); border-radius:12px; box-shadow:var(--shadow); font-size:13px; z-index:40}
+    .hidden{display:none}
+    .confetti{pointer-events:none; position:fixed; inset:0; overflow:hidden; z-index:50}
+    .dot{position:absolute; width:10px; height:10px; border-radius:50%; opacity:.3}
+
+    /* Zoom cue (floating chip) */
+    .zoom-cue{
+      position:fixed; z-index:60; pointer-events:none;
+      padding:6px 10px; border-radius:999px;
+      background:#111827; color:#e5e7eb; font-size:12px;
+      border:1px solid rgba(255,255,255,.08); box-shadow:var(--shadow);
+      opacity:0; transform:translateY(-8px) scale(.96);
+      transition:opacity .15s ease, transform .15s ease;
+    }
+    .zoom-cue.show{opacity:1; transform:translateY(-12px) scale(1)}
+    @keyframes pulseRing {0%{box-shadow:0 0 0 0 rgba(59,130,246,.25)}100%{box-shadow:0 0 0 18px rgba(59,130,246,0)}}
+    .shape.pulse{animation:pulseRing .6s ease-out 1}
+
+    /* Keep columns aligned + sticky left panel */
+    .grid{ display:grid; grid-template-columns:320px 1fr; gap:18px; align-items:start; }
+    .panel.tasks{
+      position:sticky;
+      top:72px;                       /* 56px bar + ~16px breathing room */
+      align-self:start;
+      max-height:calc(100vh - 120px); /* room for voice bar */
+      overflow:auto;
+      scrollbar-gutter:stable;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top tips bar -->
+  <div class="tooltips-bar">
+    <span class="badge">Tips</span>
+    <span style="color:var(--muted); font-size:13px">Say “flexee …” then your command. Pinch to select. Spread thumb–middle to zoom. Flick down / drag to 🗑️ to delete.</span>
+  </div>
+
+  <div class="wrap">
+    <div class="grid">
+      <!-- LEFT: Tasks -->
+      <aside class="panel tasks" id="tasks">
+        <h2>Onboarding Tasks</h2>
+        <p>We’ll auto-check these as you go.</p>
+        <div id="taskList"></div>
+        <div class="cta">
+          <button class="btn ghost" id="skip">Next</button>
+          <button class="btn" id="reset">Reset</button>
+        </div>
+      </aside>
+
+      <!-- RIGHT: Interactive board -->
+      <section class="panel board">
+        <div class="sheet" id="sheet" aria-label="Shape arena">
+          <video class="cam" id="cam" autoplay muted playsinline></video>
+          <div class="arena" id="arena"></div>
+        </div>
+
+        <div class="board-head">
+          <h3>Interactive Shapes</h3>
+          <div class="trash" id="trash" title="Drag a selected shape here to delete">
+            <div class="bin">🗑️</div><span>Trash</span>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <!-- Voice status (hotword + command), always listening) -->
+  <div class="voice-bar" role="region" aria-label="Voice status">
+    <div class="vled" id="vled"></div>
+    <div class="vtext" id="vtext">Say “flexee …” then the command</div>
+  </div>
+
+  <div class="toast hidden" id="toast"></div>
+  <div class="confetti" id="confetti" aria-hidden="true"></div>
+  <div id="zoomCue" class="zoom-cue" role="status" aria-live="polite"></div>
+  <canvas id="handCanvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:25;"></canvas>
+
+
+  <!-- Minimal gesture libs (Mediapipe) -->
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.min.js"></script>
+
+  <script>
+  /* ====== TASKS ====== */
+  const TASKS = [
+    {id:'sel_g', label:'      Select using hand gesture'},
+    {id:'sel_v', label:'      Select using voice'},
+    {id:'zoom_g', label:'     Zoom using hand gesture'},
+    {id:'zoom_v', label:'     Zoom using voice'},
+    {id:'del_g', label:'      Delete using hand gesture'},
+    {id:'del_v', label:'    Delete using voice'},
+  ];
+  const state = { sel_g:false, sel_v:false, zoom_g:false, zoom_v:false, del_g:false, del_v:false };
+
+  const taskList = document.getElementById('taskList');
+  function hintFor(id){
+    if(id==='sel_g') return '     Pinch a shape.';
+    if(id==='sel_v') return '     Say “flexee select shape”.';
+    if(id==='zoom_g') return '      Thumb–middle spread to zoom in; close to zoom out.';
+    if(id==='zoom_v') return '      Say “flexee zoom in/out”.';
+    if(id==='del_g') return '     Flick down, or drag to 🗑️.';
+    if(id==='del_v') return '     Say “flexee delete shape”.';
+    return '';
+  }
+  function renderTasks(){
+    taskList.innerHTML='';
+    TASKS.forEach(t=>{
+      const row = document.createElement('div');
+      row.className = 'task ' + (state[t.id] ? 'done' : '');
+      row.dataset.id = t.id;
+      row.innerHTML = `<div class="dot">${state[t.id]?'✓':''}</div><div><b>${t.label}</b><small>${hintFor(t.id)}</small></div>`;
+      taskList.appendChild(row);
+    });
+  }
+  function mark(id){ if(!state[id]){ state[id]=true; renderTasks(); checkDone(); } }
+  function checkDone(){
+    const all = Object.values(state).every(Boolean);
+    if(all){ confetti(); notify('All set! Redirecting…'); localStorage.setItem('eda_onboarded_v1','1'); setTimeout(()=>location.href='/sheets',1100); }
+  }
+
+  /* ====== UI REFS ====== */
+  const sheet = document.getElementById('sheet');
+  const arena = document.getElementById('arena');
+  const camEl = document.getElementById('cam');
+  const toast = document.getElementById('toast');
+  const vtext = document.getElementById('vtext');
+  const vled  = document.getElementById('vled');
+
+  function notify(msg){ toast.textContent = msg; toast.classList.remove('hidden'); clearTimeout(notify._t); notify._t = setTimeout(()=>toast.classList.add('hidden'), 1600); }
+  function confetti(){
+    const c = document.getElementById('confetti'); c.innerHTML='';
+    const colors = ['#a7c7e7','#bde5d6','#fad6d6','#fbe7c6','#d9c2f0','#cde7f0'];
+    for(let i=0;i<120;i++){ const d=document.createElement('div'); d.className='dot';
+      d.style.left=Math.random()*100+'%'; d.style.top='-8px'; d.style.background=colors[Math.floor(Math.random()*colors.length)];
+      d.style.transform=`translateY(${80+Math.random()*120}vh) translateX(${(Math.random()-.5)*30}vw)`;
+      d.style.transition=`transform ${1.4+Math.random()*1.1}s cubic-bezier(.2,.8,.2,1)`; c.appendChild(d);
+      requestAnimationFrame(()=> d.style.transform=`translateY(${120+Math.random()*40}vh) translateX(${(Math.random()-.5)*40}vw)`); }
+    setTimeout(()=> c.innerHTML='', 2200);
+  }
+
+  /* ====== BUILD SHAPES (pastel colors) ====== */
+  const SHAPES = ['circle','square','triangle','diamond','star','hex'];
+  const COLORS = ['#a7c7e7','#bde5d6','#fad6d6','#fbe7c6','#d9c2f0','#cde7f0']; // soft pastels
+
+  function shapeSVG(kind, color){
+    switch(kind){
+      case 'circle':   return `<circle cx="27" cy="27" r="24" fill="${color}"/>`;
+      case 'square':   return `<rect x="8" y="8" width="38" height="38" rx="9" fill="${color}"/>`;
+      case 'triangle': return `<polygon points="27,4 50,50 4,50" fill="${color}"/>`;
+      case 'diamond':  return `<polygon points="27,4 50,27 27,50 4,27" fill="${color}"/>`;
+      case 'star':     return `<polygon points="27,2 33,18 50,19 36,30 40,47 27,38 14,47 18,30 4,19 21,18" fill="${color}"/>`;
+      case 'hex':      return `<polygon points="15,7 39,7 50,27 39,47 15,47 4,27" fill="${color}"/>`;
+    }
+    return `<circle cx="27" cy="27" r="24" fill="${color}"/>`;
+  }
+
+  function build(){
+    const N = 48;
+    for(let i=0;i<N;i++){
+      const kind = SHAPES[i % SHAPES.length];
+      const color = COLORS[i % COLORS.length];
+      const el = document.createElement('div');
+      el.className='shape'; el.setAttribute('draggable','true'); el.dataset.index=i;
+      el.innerHTML = `<svg viewBox="0 0 54 54" aria-hidden="true">${shapeSVG(kind,color)}</svg><div class="label">${kind} #${i+1}</div>`;
+      arena.appendChild(el);
+    }
+  }
+  build(); renderTasks();
+
+  /* ====== SELECT / ZOOM / DELETE (gesture + mouse parity) ====== */
+  let selected=null, scale=1;
+
+  function selectShape(s){
+    if(selected) selected.dataset.selected='false';
+    selected=s; scale = parseFloat(selected.dataset.scale||'1');
+    s.dataset.selected='true';
+  }
+  arena.addEventListener('click', e=>{
+    const s = e.target.closest('.shape'); if(!s) return;
+    selectShape(s); notify('Selected.');
+    mark('sel_g'); // click stands in for pinch if camera not active
+  });
+
+  // Drag to bin = delete gesture parity
+  let dragEl=null;
+  arena.addEventListener('dragstart',e=>{const s=e.target.closest('.shape'); if(!s) return; dragEl=s; s.classList.add('dragging'); if(selected!==s) selectShape(s);});
+  arena.addEventListener('dragend',()=>{ if(dragEl) dragEl.classList.remove('dragging'); dragEl=null; });
+  const trash=document.getElementById('trash');
+  trash.addEventListener('dragover',e=>e.preventDefault());
+  trash.addEventListener('drop',e=>{e.preventDefault(); if(!dragEl) return; deleteSelected(true);}); // gesture
+
+  function applyScale(){
+    if(!selected) return;
+    selected.style.transform = `translateY(-2px) scale(${scale.toFixed(2)})`;
+    selected.dataset.scale = scale.toFixed(2);
+  }
+  function deleteSelected(isGesture=false){
+    if(!selected) return;
+    selected.dataset.deleted = 'true';
+    selected.innerHTML = '';              // make it blank
+    selected.style.transform = '';        // reset any scaling/offset
+    selected.removeAttribute('data-scale');
+    notify('Deleted.');
+    if(isGesture) mark('del_g'); else mark('del_v');
+  }
+
+  // Keyboard helpers
+  document.addEventListener('keydown', e=>{
+    if((e.key==='Delete'||e.key==='Backspace') && selected) deleteSelected(true);
+    if(e.key==='=' && selected){ scale=Math.min(2.0, scale+0.1); applyScale(); mark('zoom_g'); showZoomCue('Zoom In'); }
+    if(e.key==='-' && selected){ scale=Math.max(.5, scale-0.1); applyScale(); mark('zoom_g'); showZoomCue('Zoom Out'); }
+  });
+
+  /* ====== CAMERA + MEDIAPIPE HANDS ====== */
+  (async function(){ try{ const s=await navigator.mediaDevices.getUserMedia({video:true, audio:false}); camEl.srcObject=s; }catch(_){} })();
+
+  const hands = new Hands({ locateFile: f => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}` });
+  hands.setOptions({ maxNumHands:2, modelComplexity:1, minDetectionConfidence:.6, minTrackingConfidence:.5 });
+  hands.onResults(onHands);
+  const cam = new Camera(camEl, { onFrame: async()=>{ await hands.send({image:camEl}); }, width:640, height:480 }); cam.start();
+
+  /* ====== Zoom cue helpers ====== */
+  const zoomCue = document.getElementById('zoomCue');
+  function showZoomCue(text){
+    if(!selected) return;
+    zoomCue.textContent = text;
+    const r = selected.getBoundingClientRect();
+    zoomCue.style.left = Math.round(r.left + r.width/2 - zoomCue.offsetWidth/2) + 'px';
+    zoomCue.style.top  = Math.round(r.top - 14) + 'px';
+    zoomCue.classList.add('show');
+    selected.classList.add('pulse');
+    clearTimeout(showZoomCue._t1);
+    showZoomCue._t1 = setTimeout(()=>{
+      zoomCue.classList.remove('show');
+      selected && selected.classList.remove('pulse');
+    }, 500);
+  }
+  let zoomToastCooldown = 0;
+  function zoomNotifyOnce(msg){
+    const now = performance.now();
+    if(now > zoomToastCooldown){
+      notify(msg);
+      zoomToastCooldown = now + 900;
+    }
+  }
+
+  let pinchPrev=false, lastCenter=null, lastTime=0, zoomBaseline=null, flickCooldown=0;
+  function onHands(res){
+    handCtx.clearRect(0, 0, handCanvas.width, handCanvas.height);
+    const now = performance.now();
+    if(!res.multiHandLandmarks || !res.multiHandLandmarks.length){ pinchPrev=false; zoomBaseline=null; lastCenter=null; return; }
+
+    // Primary hand
+    const lm = res.multiHandLandmarks[0];
+    const idx=lm[8], th=lm[4], mid=lm[12];
+
+    // Screen coords (mirrored)
+    const r = camEl.getBoundingClientRect();
+    const cx = r.left + (1 - idx.x) * r.width;
+    const cy = r.top  + (idx.y)       * r.height;
+    const dt = Math.max(1, now - (lastTime||now));
+    const velY = lastCenter ? (cy - lastCenter.y) / dt : 0;
+
+    if (res.multiHandLandmarks && res.multiHandLandmarks.length){
+      const lm = res.multiHandLandmarks[0];
+      const r = camEl.getBoundingClientRect();
+
+      // Helper: map normalized->viewport (mirrored)
+      const mapX = (x)=> r.left + (1 - x) * r.width;
+      const mapY = (y)=> r.top  + y * r.height;
+
+      // Mediapipe finger chains
+      const CHAINS = [
+        [0,1,2,3,4],     // thumb
+        [0,5,6,7,8],     // index
+        [0,9,10,11,12],  // middle
+        [0,13,14,15,16], // ring
+        [0,17,18,19,20]  // pinky
+      ];
+
+      handCtx.lineWidth = 1;                   // very thin
+      handCtx.strokeStyle = 'rgba(0,0,0,0.9)'; // black outline
+      handCtx.fillStyle   = 'rgba(0,0,0,0.04)';// super-light neutral fill
+
+      // Draw finger chains
+      handCtx.beginPath();
+      CHAINS.forEach(chain=>{
+        chain.forEach((i, j)=>{
+          const px = mapX(lm[i].x), py = mapY(lm[i].y);
+          if (j === 0) handCtx.moveTo(px, py);
+          else handCtx.lineTo(px, py);
+        });
+      });
+      handCtx.stroke();
+
+      // Draw a soft palm “silhouette” blob using convex-ish hull points
+      const PALM = [0,1,5,9,13,17]; // wrist + MCPs (rough hull)
+      handCtx.beginPath();
+      PALM.forEach((i, j)=>{
+        const px = mapX(lm[i].x), py = mapY(lm[i].y);
+        if (j === 0) handCtx.moveTo(px, py);
+        else handCtx.lineTo(px, py);
+      });
+      handCtx.closePath();
+      handCtx.fill();
+
+      handCtx.save();
+      handCtx.fillStyle = '#f97316'; // orange
+      [4,8,12,16,20].forEach(i=>{
+        const px = mapX(lm[i].x), py = mapY(lm[i].y);
+        handCtx.beginPath();
+        handCtx.arc(px, py, 6, 0, Math.PI*2);
+        handCtx.fill();
+      });
+      handCtx.restore();
+    }
+
+
+    const pinchDist = Math.hypot(idx.x - th.x, idx.y - th.y);
+    const isPinching = pinchDist < 0.04;
+
+    // Pinch select
+    if(isPinching && !pinchPrev){
+      const el = document.elementFromPoint(cx, cy);
+      const s = el && el.closest('.shape');
+      if(s && s.dataset.deleted !== 'true'){   // skip blanks
+        selectShape(s); mark('sel_g'); notify('Pinch select.');
+      }
+    }
+    pinchPrev = isPinching;
+
+    // Zoom gesture: thumb–middle distance
+    const zoomDist = Math.hypot(mid.x - th.x, mid.y - th.y);
+    if(selected){
+      if(zoomBaseline==null) zoomBaseline=zoomDist;
+      const delta = (zoomDist - zoomBaseline);
+      if(Math.abs(delta) > 0.01){ // small deadzone
+        scale = Math.min(2.0, Math.max(.5, scale + delta*1.8));
+        applyScale(); mark('zoom_g');
+        const sign = delta > 0 ? 'Zoom +' : 'Zoom −';
+        showZoomCue(sign);
+        zoomNotifyOnce(sign);
+      }
+      zoomBaseline = zoomDist;
+    }
+
+    // Downward flick to delete
+    if(selected && !isPinching && velY > 1.4 && now > flickCooldown){
+      deleteSelected(true); flickCooldown = now + 900;
+    }
+
+    lastCenter = {x:cx, y:cy}; lastTime = now;
+  }
+
+  /* ====== ALWAYS-ON VOICE: hotword "flexee" then command ====== */
+  let recognition=null, mode='hotword', commandTimer=null;
+  function setVUI(status, text){
+    vtext.textContent = text;
+    vled.className = 'vled ' + (status||'');
+  }
+
+  function startVoiceLoop(){
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(!SR){ setVUI('', 'Voice not supported in this browser.'); return; }
+
+    recognition = new SR();
+    recognition.lang = 'en-US';
+    recognition.continuous = true;
+    recognition.interimResults = true;
+
+    recognition.onresult = (ev)=>{
+      let buf = '';
+      for(let i=ev.resultIndex;i<ev.results.length;i++){
+        buf += ev.results[i][0].transcript + ' ';
+      }
+      const text = buf.toLowerCase().trim();
+
+      if (mode === 'hotword') {
+        const hw = text.match(/\b(?:hey|ok(?:ay)?)?\s*flexe?e?\b/);
+        if (hw) {
+          // If user said the command in the same breath after the hotword, run it now.
+          const after = text.slice(hw.index + hw[0].length).trim();
+          if (handleSpecificCommand(after)) {
+            // executed immediately; stay in hotword mode
+            setVUI('hotword','Hotword active — say “flexee …”');
+            return;
+          }
+          // otherwise open a 5s command window
+          mode = 'command';
+          setVUI('command', 'Heard “flexee”. Listening 5s for a command… e.g., "select circle #1", "zoom star #11", "delete diamond #16"');
+          clearTimeout(commandTimer);
+          commandTimer = setTimeout(()=>{ mode='hotword'; setVUI('hotword','Hotword active — say “flexee …”'); }, 5000);
+        } else {
+          setVUI('hotword', 'Hotword active — say “flexee …”');
+        }
+        return;
+      }
+
+      // mode === 'command'
+      if (handleSpecificCommand(text)) {
+        clearTimeout(commandTimer);
+        mode = 'hotword';
+        setVUI('hotword','Hotword active — say “flexee …”');
+        return;
+      }
+
+      // fall back to your existing generic commands (zoom in/out, delete, scroll…)
+      const m = text.match(/\b(select|zoom in|zoom out|delete|scroll (up|down|left|right))\b/);
+      if(m){
+        clearTimeout(commandTimer);
+        mode='hotword';
+        setVUI('hotword','Hotword active — say “flexee …”');
+        handleVoiceCommand(m[0]);
+      }
+    };
+
+    recognition.onerror = () => {};
+    recognition.onend = () => { try { recognition.start(); } catch(e) { setTimeout(()=>startVoiceLoop(), 800); } };
+    try { recognition.start(); setVUI('hotword','Hotword active — say “flexee …”'); }
+    catch(e){ setVUI('', 'Please allow microphone access to use voice.'); }
+  }
+
+
+  // --- Voice: dynamic target lookup for "<kind> #<n>" across ANY label ---
+  function normalizeKindName(s){
+    return String(s||'')
+      .toLowerCase()
+      .replace(/\b(shape|tile|cell)\b/g, '')   // ignore filler words if spoken
+      .replace(/[^a-z0-9]+/g, ' ')             // keep alphanumerics
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function findShapeByLabel(kind, num){
+    const want = normalizeKindName(kind);
+    const labels = arena.querySelectorAll('.shape:not([data-deleted="true"]) .label');
+    let fallback = null;
+
+    for (const lbl of labels){
+      const text = lbl.textContent.trim();          // e.g., "circle #1" or "rounded square #12"
+      const mm = text.match(/^(.*)\s+#\s*(\d+)\s*$/);
+      if(!mm) continue;
+
+      const k = normalizeKindName(mm[1]);
+      const n = parseInt(mm[2], 10);
+      if(n !== num) continue;
+
+      if (k === want) return lbl.closest('.shape'); // exact normalized match
+      if (!fallback && (k.startsWith(want) || want.startsWith(k) || k.includes(want))){
+        fallback = lbl.closest('.shape');           // soft containment/prefix fallback
+      }
+    }
+    return fallback;   // may be null if nothing matched
+  }
+
+
+  // returns true if a specific command was parsed & executed
+    function handleSpecificCommand(text){
+      if(!text) return false;
+
+      // strip any leading hotword (flexee/hey flexee/ok/okay flexee)
+      text = text.replace(/^(?:hey|ok(?:ay)?)?\s*flexe?e?\s*/,'').trim();
+
+      let op, kind, num, dir = '';
+
+      // Pattern A: "<op> <kind words> #<num> [in|out]"
+      let m = text.match(/\b(select|zoom|delete)\b\s+(.+?)\s*#\s*(\d{1,4})\b/i);
+      if (m){
+        op   = m[1].toLowerCase();
+        kind = m[2];
+        num  = parseInt(m[3], 10);
+
+        if (op === 'zoom'){
+          const d = m[0].match(/\b(in|out)\b/i); // optional trailing in/out
+          dir = d ? d[1].toLowerCase() : '';
+        }
+      } else {
+        // Pattern B: "zoom in|out <kind words> #<num>"
+        m = text.match(/\b(zoom)\s+(in|out)\s+(.+?)\s*#\s*(\d{1,4})\b/i);
+        if (!m) return false;
+        op   = 'zoom';
+        dir  = m[2].toLowerCase();
+        kind = m[3];
+        num  = parseInt(m[4], 10);
+      }
+
+      const s = findShapeByLabel(kind, num);
+      if(!s){ notify(`Not found: ${kind} #${num}`); return true; }
+
+      // Focus/select first (counts as voice selection)
+      selectShape(s);
+      mark('sel_v');
+
+      if(op === 'select'){
+        notify(`Selected ${kind} #${num}.`);
+        return true;
+      }
+
+      if(op === 'zoom'){
+        const base = parseFloat(s.dataset.scale || '1');
+        if(dir === 'out'){
+          scale = Math.max(.5, base - 0.15);
+          applyScale(); mark('zoom_v'); notify(`Zoomed out ${kind} #${num}.`); showZoomCue('Zoom −');
+        } else {
+          scale = Math.min(2.0, base + 0.15);       // default to zoom in
+          applyScale(); mark('zoom_v'); notify(`Zoomed in ${kind} #${num}.`);  showZoomCue('Zoom +');
+        }
+        return true;
+      }
+
+      if(op === 'delete'){
+        deleteSelected(false); // leaves a blank tile per your existing logic
+        return true;
+      }
+
+      return false;
+    }
+
+
+
+  function handleVoiceCommand(cmd){
+    if (handleSpecificCommand(String(cmd||''))) return;
+    const text = String(cmd||'').toLowerCase();
+
+    if(text.startsWith('select')){
+      const s = arena.querySelector('.shape:not([data-deleted="true"])');
+      if(s){ selectShape(s); mark('sel_v'); notify('Selected by voice.'); }
+      return;
+    }
+
+    if(text.includes('zoom in')){
+      if(selected){ scale=Math.min(2.0, scale+0.15); applyScale(); mark('zoom_v'); notify('Zoomed in.'); showZoomCue('Zoom In'); }
+      return;
+    }
+    if(text.includes('zoom out')){
+      if(selected){ scale=Math.max(.5, scale-0.15); applyScale(); mark('zoom_v'); notify('Zoomed out.'); showZoomCue('Zoom Out'); }
+      return;
+    }
+
+    if(text.startsWith('delete')){ deleteSelected(false); return; }
+
+    if(text.startsWith('scroll')){
+      const dir = text.includes('up') ? {top:-260,left:0} :
+                  text.includes('left') ? {top:0,left:-260} :
+                  text.includes('right') ? {top:0,left:260} : {top:260,left:0};
+      sheet.scrollBy({ top:dir.top, left:dir.left, behavior:'smooth' });
+      return;
+    }
+  }
+
+  /* ====== CONTROLS & PERSISTENCE ====== */
+  // Use "next" button (or legacy 'skip') to go to index
+  const nextBtn = document.getElementById('next') || document.getElementById('skip');
+  if (nextBtn) {
+    nextBtn.addEventListener('click', () => {
+      localStorage.setItem('eda_onboarded_v1', '1');
+      location.href = '/sheets';
+    });
+  }
+  document.getElementById('reset').addEventListener('click', ()=>{ localStorage.removeItem('eda_onboarded_v1'); location.reload(); });
+
+  // Start camera + voice after DOM is ready
+  window.addEventListener('DOMContentLoaded', startVoiceLoop);
+
+
+
+
+  const handCanvas = document.getElementById('handCanvas');
+  const handCtx = handCanvas.getContext('2d');
+  function resizeHandCanvas(){
+    handCanvas.width = window.innerWidth;
+    handCanvas.height = window.innerHeight;
+  }
+  resizeHandCanvas();
+  window.addEventListener('resize', resizeHandCanvas);
+
+  </script>
+</body>
+</html>
