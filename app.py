@@ -71,26 +71,26 @@ def view_sheet():
         logging.error(f"Failed to load sheet: {e}", exc_info=True)
         return f"Failed to load sheet: {e}"
 
-# @app.route('/', methods=['GET', 'POST'])
-# def index():
-#     if request.method == 'POST':
-#         sheet_url = request.form['sheet_url']
-#         logging.debug(f"Received POST with sheet_url: {sheet_url}")
-#
-#         match = re.search(r'/d/([a-zA-Z0-9-_]+)', sheet_url)
-#         if not match:
-#             logging.warning("Invalid Google Sheets URL format.")
-#             return "Invalid Google Sheets URL."
-#         sheet_id = match.group(1)
-#
-#         gid_match = re.search(r'gid=([0-9]+)', sheet_url)
-#         gid = gid_match.group(1) if gid_match else '0'
-#
-#         spreadsheet_title = get_spreadsheet_title(sheet_id, API_KEY)
-#         csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}"
-#         return redirect(url_for('view_sheet', csv_url=csv_url, sheet_name=spreadsheet_title))
-#
-#     return render_template('index.html')
+@app.route('/sheets', methods=['GET', 'POST'])
+def index():
+    if request.method == 'POST':
+        sheet_url = request.form['sheet_url']
+        logging.debug(f"Received POST with sheet_url: {sheet_url}")
+
+        match = re.search(r'/d/([a-zA-Z0-9-_]+)', sheet_url)
+        if not match:
+            logging.warning("Invalid Google Sheets URL format.")
+            return "Invalid Google Sheets URL."
+        sheet_id = match.group(1)
+
+        gid_match = re.search(r'gid=([0-9]+)', sheet_url)
+        gid = gid_match.group(1) if gid_match else '0'
+
+        spreadsheet_title = get_spreadsheet_title(sheet_id, API_KEY)
+        csv_url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={gid}"
+        return redirect(url_for('view_sheet', csv_url=csv_url, sheet_name=spreadsheet_title))
+
+    return render_template('index.html')
 
 @app.route('/authorize')
 def authorize():
@@ -248,7 +248,7 @@ def onboarding():
 
 # --- change your root route to show onboarding first on GET ---
 @app.route('/', methods=['GET', 'POST'])
-def index():
+def onboard():
     if request.method == 'POST':
         sheet_url = request.form['sheet_url']
         logging.debug(f"Received POST with sheet_url: {sheet_url}")
@@ -269,9 +269,9 @@ def index():
     # GET → show the new onboarding page first
     return render_template('onboarding.html', **_auth_flags())
 
-@app.get('/sheets')
-def sheets_form():
-    return render_template('index.html', **_auth_flags())
+# @app.get('/sheets')
+# def sheets_form():
+#     return render_template('index.html', **_auth_flags())
 
 
 if __name__ == '__main__':
