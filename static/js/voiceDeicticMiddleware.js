@@ -16,6 +16,53 @@
 
     const DT  = global.DeicticTarget;
 
+
+    // Put these near clean()
+    const WORD_NUM = {
+    'zero':0,'one':1,'two':2,'three':3,'four':4,'five':5,'six':6,'seven':7,'eight':8,'nine':9,'ten':10,
+    'eleven':11,'twelve':12,'thirteen':13,'fourteen':14,'fifteen':15,'sixteen':16,'seventeen':17,'eighteen':18,'nineteen':19,'twenty':20
+    };
+    const ORD_NUM = {
+    '1st':1,'first':1,'2nd':2,'second':2,'3rd':3,'third':3,'4th':4,'fourth':4,'5th':5,'fifth':5,'6th':6,'sixth':6,
+    '7th':7,'seventh':7,'8th':8,'eighth':8,'9th':9,'ninth':9,'10th':10,'tenth':10
+    };
+
+    // "row five" -> 5, "fifth row" -> 5, "line 12" -> 12
+    function extractRowNumber(s){
+    // ordinals anywhere
+    for (const [k,v] of Object.entries(ORD_NUM)) {
+        if (new RegExp(`\\b${k}\\b`).test(s)) return v;
+    }
+    // "row five", "row 5", "line 10"
+    const m = s.match(/\b(?:row|line)\s+([a-z]+|\d+)\b/);
+    if (m){
+        const w = m[1];
+        if (/^\d+$/.test(w)) return parseInt(w,10);
+        if (WORD_NUM[w] != null) return WORD_NUM[w];
+    }
+    // "go to 5th", "to 12"
+    const m2 = s.match(/\b(?:go|scroll|jump)\s+(?:to|into|down to|up to)?\s*(\d+|[a-z]+(?:th|st|nd|rd)?)\b/);
+    if (m2){
+        const w = m2[1];
+        if (/^\d+$/.test(w)) return parseInt(w,10);
+        if (ORD_NUM[w]) return ORD_NUM[w];
+    }
+    return null;
+    }
+
+    // "b5" / "b 5" / "cell b5" / "select column b" / "select row five"
+    function extractA1(s){
+    // "cell b 5" / "cell b5" / "b5"
+    const cell = s.match(/\b(?:cell\s*)?([a-z]+)\s*(\d+)\b/i);
+    if (cell){ return (cell[1]+cell[2]).toUpperCase(); }
+    return null;
+    }
+
+
+
+
+
+
     // ---------- misc helpers ----------
     function clean(s){
         let t = String(s||'').trim();
@@ -155,6 +202,64 @@
     // ---------- Legacy local parser (kept for non-deictic or single-target cases) ----------
     function parseLocal(raw){
         const s = clean(raw);
+
+        /* ==== [ADD] new semantic branches (runs before your existing ones) ==== */
+        {
+        // --- SELECT specific cell / column / row ---
+        // e.g. "select b5", "select cell b 5", "go to cell c12", "select row five", "select column B"
+        const a1 = extractA1(s);
+        if (a1 && /\b(select|go to|focus|highlight|pick)\b/i.test(s)) {
+            return { action: 'select', range: a1, confidence: 0.96 };
+        }
+        const colM = s.match(/\bselect\s+(?:column|col)\s+([a-z]+)\b/i);
+        if (colM) {
+            const L = colM[1].toUpperCase();
+            // whole column span; executor will clamp rows
+            return { action: 'select', range: `${L}1:${L}999999`, confidence: 0.94 };
+        }
+        const rowN_for_select = extractRowNumber(s);
+        if (rowN_for_select && /\bselect\b/i.test(s)) {
+            // whole row span; executor will clamp columns
+            return { action: 'select', range: `A${rowN_for_select}:ZZ${rowN_for_select}`, confidence: 0.93 };
+        }
+
+        // --- SCROLL: generic + “to Nth row” + “up/down” with default step ---
+        const DEFAULT_STEP = 8;
+
+        // "scroll down" / "go down" / "move down" (no number → default step)
+        if (/\b(scroll|go|move)\s+(down|below)\b/i.test(s) && !/\b\d+\b/.test(s)) {
+            return { action: 'scroll', delta: +DEFAULT_STEP, confidence: 0.90 };
+        }
+        // "scroll up"
+        if (/\b(scroll|go|move)\s+up\b/i.test(s) && !/\b\d+\b/.test(s)) {
+            return { action: 'scroll', delta: -DEFAULT_STEP, confidence: 0.90 };
+        }
+        // "scroll to the 5th row" / "go to row five" / "jump to 20"
+        const rowN_for_scroll = extractRowNumber(s);
+        if (rowN_for_scroll && /\b(scroll|go|jump)\b/i.test(s)) {
+            return { action: 'scroll', row: rowN_for_scroll, confidence: 0.95 };
+        }
+        // "go to top/bottom"
+        if (/\b(top|first row|beginning|start)\b/i.test(s)) {
+            return { action: 'scroll', row: 1, confidence: 0.90 };
+        }
+        if (/\b(bottom|last row|end)\b/i.test(s)) {
+            return { action: 'scroll', row: 999999, confidence: 0.90 }; // executor clamps
+        }
+
+        // --- ZOOM synonyms (maps to your existing zoom executor) ---
+        if (/\b(zoom|scale)\b/i.test(s)){
+            if (/\b(in|closer|bigger)\b/i.test(s))   return { action:'zoom', direction:'in',    confidence:0.95 };
+            if (/\b(out|smaller|farther)\b/i.test(s))return { action:'zoom', direction:'out',   confidence:0.95 };
+            if (/\b(reset|normal|default)\b/i.test(s))return { action:'zoom', direction:'reset', confidence:0.90 };
+        }
+        }
+        /* ==== [END add] continue with your existing branches below ==== */
+
+
+
+
+
 
         // SELECT
         if (/^select\b/.test(s) || /\bselect\b/.test(s)){
