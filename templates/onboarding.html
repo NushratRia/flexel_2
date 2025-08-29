@@ -40,15 +40,13 @@
     .tasks h2{margin:0 0 8px; font-size:18px}
     .tasks p{margin:0 0 14px; color:var(--muted); font-size:13px}
 
-    /* Each task row: dot | text (text column resilient) */
-    /* Make each task row use flex instead of grid */
-    /* --- spacing & card feel --- */
+    /* Each task row: dot | text (flex so text never squishes) */
     .task{
-      display:flex;                /* from previous fix */
+      display:flex;
       align-items:flex-start;
       gap:12px;
       padding:14px 16px;
-      margin-bottom:16px;          /* space between tasks */
+      margin-bottom:16px;
       background:#fff;
       border:1px dashed rgba(2,6,23,.12);
       border-radius:14px;
@@ -56,34 +54,12 @@
       transition:box-shadow .15s ease, transform .15s ease;
     }
     .task:hover{ box-shadow:0 6px 20px rgba(15,23,42,.06); transform:translateY(-1px); }
-
-    .task .dot{ flex:0 0 22px; margin-top:2px; }
-    .task > div:nth-child(2){
-      flex:1 1 auto;
-      min-width:0;
-      white-space:normal;
-      overflow-wrap:anywhere;
-      word-break:normal;
-      hyphens:auto;
-    }
+    .task .dot{ flex:0 0 22px; width:22px; height:22px; border-radius:999px; border:2px solid rgba(2,6,23,.12); display:flex; align-items:center; justify-content:center; font-size:12px; line-height:1; color:#64748b; margin-top:2px; }
+    .task > div:nth-child(2){ flex:1 1 auto; min-width:0; overflow-wrap:anywhere; }
     .task b{ display:block; font-size:14px; margin:0 0 6px; }
-
-    /* --- brighter pastel for completed --- */
-    :root{
-      --done1:#c9f2e4;   /* minty pastel */
-      --done2:#ecfff8;   /* very light bottom fade */
-      --doneBorder: rgba(16,185,129,.55);
-    }
-    .task.done{
-      background:linear-gradient(180deg, var(--done1), var(--done2));
-      border-color:var(--doneBorder);
-    }
-    .task.done .dot{
-      background:#10b981;
-      border-color:#059669;
-      color:#fff;
-    }
-
+    :root{ --done1:#c9f2e4; --done2:#ecfff8; --doneBorder: rgba(16,185,129,.55); }
+    .task.done{ background:linear-gradient(180deg, var(--done1), var(--done2)); border-color:var(--doneBorder); }
+    .task.done .dot{ background:#10b981; border-color:#059669; color:#fff; }
     .task small{display:block; color:var(--muted); line-height:1.35}
 
     .cta{margin-top:12px; display:flex; gap:8px}
@@ -99,30 +75,43 @@
     .trash .bin{width:28px; height:28px; border-radius:10px; display:grid; place-items:center; border:1px solid rgba(2,6,23,.12); background:#fff}
 
     /* Camera overlay + arena */
-    .sheet{margin-top:12px; height:560px; border-radius:14px; border:1px solid rgba(2,6,23,.06); background:#ffffff; overflow:auto; position:relative;}
+    .sheet{
+      margin-top:12px;
+      height:clamp(380px, 60vh, 640px);        /* responsive height */
+      border-radius:14px; border:1px solid rgba(2,6,23,.06);
+      background:#ffffff; overflow:auto; position:relative;
+    }
     .cam{position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.12; filter:grayscale(100%); mix-blend-mode:multiply; pointer-events:none; transform:scaleX(-1);}
 
-    /* Shapes: soft pastel colors */
-    .arena{position:relative; min-height:900px; padding:24px; display:grid; grid-template-columns: repeat(6, minmax(120px, 1fr)); gap:16px}
-    .shape{position:relative; display:grid; place-items:center; height:120px; border-radius:18px; user-select:none; cursor:pointer;
+    /* Shapes grid: responsive columns */
+    /* Shapes grid: responsive columns with bigger tiles */
+    .arena{
+      position:relative;
+      padding:24px;
+      display:grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); /* larger min size */
+      gap:20px;
+    }
+
+    /* Bigger shapes */
+    .shape{
+      position:relative;
+      display:grid;
+      place-items:center;
+      height:180px;                     /* bigger height */
+      border-radius:20px;
+      user-select:none;
+      cursor:pointer;
       background:linear-gradient(180deg, rgba(2,6,23,.02), rgba(2,6,23,.045));
-      border:1px solid rgba(2,6,23,.06); transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease}
-    .shape .label{font-size:12px; color:#334155}
-    .shape svg{width:58px; height:58px}
-    .shape[data-selected="true"]{outline:2px solid var(--acc); box-shadow:var(--ring); transform:translateY(-2px); border-color:rgba(59,130,246,.35)}
-    /* Blank tile when deleted */
-.shape[data-deleted="true"]{
-  opacity:1;                 /* no faded look */
-  filter:none;
-  background:#fff;           /* plain blank */
-  border:1px dashed rgba(2,6,23,.18);
-  box-shadow:none;
-  outline:none;
-}
-.shape[data-deleted="true"] svg,
-.shape[data-deleted="true"] .label{
-  display:none;              /* hide content */
-}
+      border:1px solid rgba(2,6,23,.06);
+      transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease;
+    }
+    .shape .label{font-size:14px; color:#334155; margin-top:6px;}
+    .shape svg{width:96px; height:96px;} /* enlarge icons */
+    .shape[data-selected="true"]{outline:3px solid var(--acc); box-shadow:var(--ring); transform:translateY(-3px); border-color:rgba(59,130,246,.35)}
+    .shape[data-deleted="true"]{opacity:1; filter:none; background:#fff; border:1px dashed rgba(2,6,23,.18); box-shadow:none; outline:none;}
+    .shape[data-deleted="true"] svg, .shape[data-deleted="true"] .label{display:none;}
+
     .shape.target{border-color:rgba(245,158,11,.45); box-shadow:0 0 0 8px rgba(245,158,11,.12)}
     .dragging{opacity:.6}
 
@@ -145,15 +134,23 @@
     @keyframes pulseRing {0%{box-shadow:0 0 0 0 rgba(59,130,246,.25)}100%{box-shadow:0 0 0 18px rgba(59,130,246,0)}}
     .shape.pulse{animation:pulseRing .6s ease-out 1}
 
-    /* Keep columns aligned + sticky left panel */
+    /* Keep columns aligned + sticky left panel on wide screens */
     .grid{ display:grid; grid-template-columns:320px 1fr; gap:18px; align-items:start; }
     .panel.tasks{
       position:sticky;
-      top:72px;                       /* 56px bar + ~16px breathing room */
+      top:72px;
       align-self:start;
-      max-height:calc(100vh - 120px); /* room for voice bar */
+      max-height:calc(100vh - 120px);
       overflow:auto;
       scrollbar-gutter:stable;
+    }
+
+    /* ===== Responsive layout tweaks ===== */
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: 1fr; }
+      .panel.tasks{ position:static; max-height:none; overflow:visible; }
+      .wrap{ margin:76px auto 120px; }        /* a bit tighter on small screens */
+      .vtext{ max-width:72vw; }               /* more room for voice text */
     }
   </style>
 </head>
@@ -204,7 +201,6 @@
   <div class="confetti" id="confetti" aria-hidden="true"></div>
   <div id="zoomCue" class="zoom-cue" role="status" aria-live="polite"></div>
   <canvas id="handCanvas" style="position:fixed;top:0;left:0;width:100vw;height:100vh;pointer-events:none;z-index:25;"></canvas>
-
 
   <!-- Minimal gesture libs (Mediapipe) -->
   <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js"></script>
@@ -268,7 +264,7 @@
     setTimeout(()=> c.innerHTML='', 2200);
   }
 
-  /* ====== BUILD SHAPES (pastel colors) ====== */
+  /* ====== BUILD SHAPES (pastel colors) */
   const SHAPES = ['circle','square','triangle','diamond','star','hex'];
   const COLORS = ['#a7c7e7','#bde5d6','#fad6d6','#fbe7c6','#d9c2f0','#cde7f0']; // soft pastels
 
@@ -285,7 +281,7 @@
   }
 
   function build(){
-    const N = 48;
+    const N = 8;  // <<< fewer shapes: 4–6 is enough for the tutorial
     for(let i=0;i<N;i++){
       const kind = SHAPES[i % SHAPES.length];
       const color = COLORS[i % COLORS.length];
@@ -327,8 +323,8 @@
   function deleteSelected(isGesture=false){
     if(!selected) return;
     selected.dataset.deleted = 'true';
-    selected.innerHTML = '';              // make it blank
-    selected.style.transform = '';        // reset any scaling/offset
+    selected.innerHTML = '';
+    selected.style.transform = '';
     selected.removeAttribute('data-scale');
     notify('Deleted.');
     if(isGesture) mark('del_g'); else mark('del_v');
@@ -394,87 +390,41 @@
     if (res.multiHandLandmarks && res.multiHandLandmarks.length){
       const lm = res.multiHandLandmarks[0];
       const r = camEl.getBoundingClientRect();
-
-      // Helper: map normalized->viewport (mirrored)
       const mapX = (x)=> r.left + (1 - x) * r.width;
       const mapY = (y)=> r.top  + y * r.height;
 
-      // Mediapipe finger chains
-      const CHAINS = [
-        [0,1,2,3,4],     // thumb
-        [0,5,6,7,8],     // index
-        [0,9,10,11,12],  // middle
-        [0,13,14,15,16], // ring
-        [0,17,18,19,20]  // pinky
-      ];
-
-      handCtx.lineWidth = 1;                   // very thin
-      handCtx.strokeStyle = 'rgba(0,0,0,0.9)'; // black outline
-      handCtx.fillStyle   = 'rgba(0,0,0,0.04)';// super-light neutral fill
-
-      // Draw finger chains
-      handCtx.beginPath();
-      CHAINS.forEach(chain=>{
-        chain.forEach((i, j)=>{
-          const px = mapX(lm[i].x), py = mapY(lm[i].y);
-          if (j === 0) handCtx.moveTo(px, py);
-          else handCtx.lineTo(px, py);
-        });
-      });
-      handCtx.stroke();
-
-      // Draw a soft palm “silhouette” blob using convex-ish hull points
-      const PALM = [0,1,5,9,13,17]; // wrist + MCPs (rough hull)
-      handCtx.beginPath();
-      PALM.forEach((i, j)=>{
-        const px = mapX(lm[i].x), py = mapY(lm[i].y);
-        if (j === 0) handCtx.moveTo(px, py);
-        else handCtx.lineTo(px, py);
-      });
-      handCtx.closePath();
-      handCtx.fill();
-
-      handCtx.save();
-      handCtx.fillStyle = '#f97316'; // orange
-      [4,8,12,16,20].forEach(i=>{
-        const px = mapX(lm[i].x), py = mapY(lm[i].y);
-        handCtx.beginPath();
-        handCtx.arc(px, py, 6, 0, Math.PI*2);
-        handCtx.fill();
-      });
-      handCtx.restore();
+      const CHAINS = [[0,1,2,3,4],[0,5,6,7,8],[0,9,10,11,12],[0,13,14,15,16],[0,17,18,19,20]];
+      handCtx.lineWidth = 1; handCtx.strokeStyle = 'rgba(0,0,0,0.9)'; handCtx.fillStyle = 'rgba(0,0,0,0.04)';
+      handCtx.beginPath(); CHAINS.forEach(chain=>{ chain.forEach((i,j)=>{ const px=mapX(lm[i].x), py=mapY(lm[i].y); j?handCtx.lineTo(px,py):handCtx.moveTo(px,py); }); }); handCtx.stroke();
+      const PALM=[0,1,5,9,13,17]; handCtx.beginPath(); PALM.forEach((i,j)=>{ const px=mapX(lm[i].x), py=mapY(lm[i].y); j?handCtx.lineTo(px,py):handCtx.moveTo(px,py); }); handCtx.closePath(); handCtx.fill();
+      handCtx.save(); handCtx.fillStyle='#f97316'; [4,8,12,16,20].forEach(i=>{ const px=mapX(lm[i].x), py=mapY(lm[i].y); handCtx.beginPath(); handCtx.arc(px,py,6,0,Math.PI*2); handCtx.fill(); }); handCtx.restore();
     }
-
 
     const pinchDist = Math.hypot(idx.x - th.x, idx.y - th.y);
     const isPinching = pinchDist < 0.04;
 
-    // Pinch select
     if(isPinching && !pinchPrev){
       const el = document.elementFromPoint(cx, cy);
       const s = el && el.closest('.shape');
-      if(s && s.dataset.deleted !== 'true'){   // skip blanks
+      if(s && s.dataset.deleted !== 'true'){
         selectShape(s); mark('sel_g'); notify('Selected.');
       }
     }
     pinchPrev = isPinching;
 
-    // Zoom gesture: thumb–middle distance
     const zoomDist = Math.hypot(mid.x - th.x, mid.y - th.y);
     if(selected){
       if(zoomBaseline==null) zoomBaseline=zoomDist;
       const delta = (zoomDist - zoomBaseline);
-      if(Math.abs(delta) > 0.01){ // small deadzone
+      if(Math.abs(delta) > 0.01){
         scale = Math.min(2.0, Math.max(.5, scale + delta*1.8));
         applyScale(); mark('zoom_g');
         const sign = delta > 0 ? 'Zoom In' : 'Zoom Out';
-        showZoomCue(sign);
-        zoomNotifyOnce(sign);
+        showZoomCue(sign); zoomNotifyOnce(sign);
       }
       zoomBaseline = zoomDist;
     }
 
-    // Downward flick to delete
     if(selected && !isPinching && velY > 1.4 && now > flickCooldown){
       deleteSelected(true); flickCooldown = now + 900;
     }
@@ -484,10 +434,7 @@
 
   /* ====== ALWAYS-ON VOICE: hotword "flexee" then command ====== */
   let recognition=null, mode='hotword', commandTimer=null;
-  function setVUI(status, text){
-    vtext.textContent = text;
-    vled.className = 'vled ' + (status||'');
-  }
+  function setVUI(status, text){ vtext.textContent = text; vled.className = 'vled ' + (status||''); }
 
   function startVoiceLoop(){
     const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -498,63 +445,37 @@
     recognition.continuous = true;
     recognition.interimResults = true;
 
-    let lastExecTS = 0;  // prevents trailing ASR from triggering a second command
+    let lastExecTS = 0;
 
     recognition.onresult = (ev)=>{
       let buf = '';
-      for(let i=ev.resultIndex;i<ev.results.length;i++){
-        buf += ev.results[i][0].transcript + ' ';
-      }
+      for(let i=ev.resultIndex;i<ev.results.length;i++){ buf += ev.results[i][0].transcript + ' '; }
       const text = buf.toLowerCase().trim();
-      if (performance.now() - lastExecTS < 250) return; // 250ms ignore window after an execution
-
+      if (performance.now() - lastExecTS < 250) return;
 
       if (mode === 'hotword') {
         const hw = text.match(/\b(?:hey|ok(?:ay)?)?\s*flexe?e?\b/);
         if (hw) {
-          // If user continued with a command in the same breath (e.g., "flexee select circle #1")
           const after = text.slice(hw.index + hw[0].length).trim();
-
-          // Try the specific parser first; if not present in your file, this returns false and is harmless.
           if (typeof handleSpecificCommand === 'function' && handleSpecificCommand(after)) {
-            lastExecTS = performance.now();             // <— mark execution
-            mode = 'hotword';                           // re-arm immediately
-            setVUI('hotword','Say “flexee …” then the command');
-            return;
+            lastExecTS = performance.now(); mode='hotword'; setVUI('hotword','Say “flexee …” then the command'); return;
           }
-
-          // Otherwise open a 5s command window waiting for the next phrase
           mode = 'command';
           setVUI('command', 'Heard “flexee”. Listening 5s… e.g., "select … #N", "zoom … #N", "delete … #N"');
           clearTimeout(commandTimer);
           commandTimer = setTimeout(()=>{ mode='hotword'; setVUI('hotword','Say “flexee …” then the command'); }, 5000);
-        } else {
-          setVUI('hotword', 'Say “flexee …” then the command');
-        }
+        } else setVUI('hotword', 'Say “flexee …” then the command');
         return;
       }
 
-
-      // mode === 'command'
       if (typeof handleSpecificCommand === 'function' && handleSpecificCommand(text)) {
-        clearTimeout(commandTimer);
-        lastExecTS = performance.now();         // <— mark execution
-        mode = 'hotword';                       // require saying "flexee" again
-        setVUI('hotword','Say “flexee …” then the command');
-        return;
+        clearTimeout(commandTimer); lastExecTS = performance.now(); mode='hotword'; setVUI('hotword','Say “flexee …” then the command'); return;
       }
 
-      // Fallback to your generic commands if you still support them (zoom in/out, delete, scroll…)
       const m = text.match(/\b(select|zoom in|zoom out|delete|scroll (up|down|left|right))\b/);
       if (m) {
-        clearTimeout(commandTimer);
-        handleVoiceCommand(m[0]);               // runs once
-        lastExecTS = performance.now();         // <— mark execution
-        mode='hotword';                         // require hotword again
-        setVUI('hotword','Say “flexee …” then the command');
-        return;
+        clearTimeout(commandTimer); handleVoiceCommand(m[0]); lastExecTS = performance.now(); mode='hotword'; setVUI('hotword','Say “flexee …” then the command');
       }
-
     };
 
     recognition.onerror = () => {};
@@ -563,125 +484,55 @@
     catch(e){ setVUI('', 'Please allow microphone access to use voice.'); }
   }
 
-
-  // --- Voice: dynamic target lookup for "<kind> #<n>" across ANY label ---
-  function normalizeKindName(s){
-    return String(s||'')
-      .toLowerCase()
-      .replace(/\b(shape|tile|cell)\b/g, '')   // ignore filler words if spoken
-      .replace(/[^a-z0-9]+/g, ' ')             // keep alphanumerics
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-
+  function normalizeKindName(s){ return String(s||'').toLowerCase().replace(/\b(shape|tile|cell)\b/g,'').replace(/[^a-z0-9]+/g,' ').replace(/\s+/g,' ').trim(); }
   function findShapeByLabel(kind, num){
     const want = normalizeKindName(kind);
     const labels = arena.querySelectorAll('.shape:not([data-deleted="true"]) .label');
     let fallback = null;
-
     for (const lbl of labels){
-      const text = lbl.textContent.trim();          // e.g., "circle #1" or "rounded square #12"
+      const text = lbl.textContent.trim();
       const mm = text.match(/^(.*)\s+#\s*(\d+)\s*$/);
       if(!mm) continue;
-
       const k = normalizeKindName(mm[1]);
       const n = parseInt(mm[2], 10);
       if(n !== num) continue;
-
-      if (k === want) return lbl.closest('.shape'); // exact normalized match
-      if (!fallback && (k.startsWith(want) || want.startsWith(k) || k.includes(want))){
-        fallback = lbl.closest('.shape');           // soft containment/prefix fallback
-      }
+      if (k === want) return lbl.closest('.shape');
+      if (!fallback && (k.startsWith(want) || want.startsWith(k) || k.includes(want))) fallback = lbl.closest('.shape');
     }
-    return fallback;   // may be null if nothing matched
+    return fallback;
   }
 
+  function handleSpecificCommand(text){
+    if(!text) return false;
+    text = text.replace(/^(?:hey|ok(?:ay)?)?\s*flexe?e?\s*/,'').trim();
+    let op, kind, num, dir = '';
+    let m = text.match(/\b(select|zoom|delete)\b\s+(.+?)\s*#\s*(\d{1,4})\b/i);
+    if (m){ op=m[1].toLowerCase(); kind=m[2]; num=parseInt(m[3],10); if(op==='zoom'){ const d=m[0].match(/\b(in|out)\b/i); dir=d?d[1].toLowerCase():''; } }
+    else { m = text.match(/\b(zoom)\s+(in|out)\s+(.+?)\s*#\s*(\d{1,4})\b/i); if(!m) return false; op='zoom'; dir=m[2].toLowerCase(); kind=m[3]; num=parseInt(m[4],10); }
 
-  // returns true if a specific command was parsed & executed
-    function handleSpecificCommand(text){
-      if(!text) return false;
+    const s = findShapeByLabel(kind, num);
+    if(!s){ notify(`Not found: ${kind} #${num}`); return true; }
 
-      // strip any leading hotword (flexee/hey flexee/ok/okay flexee)
-      text = text.replace(/^(?:hey|ok(?:ay)?)?\s*flexe?e?\s*/,'').trim();
+    selectShape(s); mark('sel_v');
 
-      let op, kind, num, dir = '';
-
-      // Pattern A: "<op> <kind words> #<num> [in|out]"
-      let m = text.match(/\b(select|zoom|delete)\b\s+(.+?)\s*#\s*(\d{1,4})\b/i);
-      if (m){
-        op   = m[1].toLowerCase();
-        kind = m[2];
-        num  = parseInt(m[3], 10);
-
-        if (op === 'zoom'){
-          const d = m[0].match(/\b(in|out)\b/i); // optional trailing in/out
-          dir = d ? d[1].toLowerCase() : '';
-        }
-      } else {
-        // Pattern B: "zoom in|out <kind words> #<num>"
-        m = text.match(/\b(zoom)\s+(in|out)\s+(.+?)\s*#\s*(\d{1,4})\b/i);
-        if (!m) return false;
-        op   = 'zoom';
-        dir  = m[2].toLowerCase();
-        kind = m[3];
-        num  = parseInt(m[4], 10);
-      }
-
-      const s = findShapeByLabel(kind, num);
-      if(!s){ notify(`Not found: ${kind} #${num}`); return true; }
-
-      // Focus/select first (counts as voice selection)
-      selectShape(s);
-      mark('sel_v');
-
-      if(op === 'select'){
-        notify(`Selected ${kind} #${num}.`);
-        return true;
-      }
-
-      if(op === 'zoom'){
-        const base = parseFloat(s.dataset.scale || '1');
-        if(dir === 'out'){
-          scale = Math.max(.5, base - 0.15);
-          applyScale(); mark('zoom_v'); notify(`Zoomed out ${kind} #${num}.`); showZoomCue('Zoom −');
-        } else {
-          scale = Math.min(2.0, base + 0.15);       // default to zoom in
-          applyScale(); mark('zoom_v'); notify(`Zoomed in ${kind} #${num}.`);  showZoomCue('Zoom +');
-        }
-        return true;
-      }
-
-      if(op === 'delete'){
-        deleteSelected(false); // leaves a blank tile per your existing logic
-        return true;
-      }
-
-      return false;
+    if(op === 'select'){ notify(`Selected ${kind} #${num}.`); return true; }
+    if(op === 'zoom'){
+      const base = parseFloat(s.dataset.scale || '1');
+      if(dir === 'out'){ scale=Math.max(.5, base-0.15); applyScale(); mark('zoom_v'); notify(`Zoomed out ${kind} #${num}.`); showZoomCue('Zoom Out'); }
+      else{ scale=Math.min(2.0, base+0.15); applyScale(); mark('zoom_v'); notify(`Zoomed in ${kind} #${num}.`); showZoomCue('Zoom In'); }
+      return true;
     }
-
-
+    if(op === 'delete'){ deleteSelected(false); return true; }
+    return false;
+  }
 
   function handleVoiceCommand(cmd){
     if (handleSpecificCommand(String(cmd||''))) return;
     const text = String(cmd||'').toLowerCase();
-
-    if(text.startsWith('select')){
-      const s = arena.querySelector('.shape:not([data-deleted="true"])');
-      if(s){ selectShape(s); mark('sel_v'); notify('Selected by voice.'); }
-      return;
-    }
-
-    if(text.includes('zoom in')){
-      if(selected){ scale=Math.min(2.0, scale+0.15); applyScale(); mark('zoom_v'); notify('Zoomed in.'); showZoomCue('Zoom In'); }
-      return;
-    }
-    if(text.includes('zoom out')){
-      if(selected){ scale=Math.max(.5, scale-0.15); applyScale(); mark('zoom_v'); notify('Zoomed out.'); showZoomCue('Zoom Out'); }
-      return;
-    }
-
+    if(text.startsWith('select')){ const s = arena.querySelector('.shape:not([data-deleted="true"])'); if(s){ selectShape(s); mark('sel_v'); notify('Selected by voice.'); } return; }
+    if(text.includes('zoom in')){ if(selected){ scale=Math.min(2.0, scale+0.15); applyScale(); mark('zoom_v'); notify('Zoomed in.'); showZoomCue('Zoom In'); } return; }
+    if(text.includes('zoom out')){ if(selected){ scale=Math.max(.5, scale-0.15); applyScale(); mark('zoom_v'); notify('Zoomed out.'); showZoomCue('Zoom Out'); } return; }
     if(text.startsWith('delete')){ deleteSelected(false); return; }
-
     if(text.startsWith('scroll')){
       const dir = text.includes('up') ? {top:-260,left:0} :
                   text.includes('left') ? {top:0,left:-260} :
@@ -692,7 +543,6 @@
   }
 
   /* ====== CONTROLS & PERSISTENCE ====== */
-  // Use "next" button (or legacy 'skip') to go to index
   const nextBtn = document.getElementById('next') || document.getElementById('skip');
   if (nextBtn) {
     nextBtn.addEventListener('click', () => {
@@ -705,18 +555,10 @@
   // Start camera + voice after DOM is ready
   window.addEventListener('DOMContentLoaded', startVoiceLoop);
 
-
-
-
   const handCanvas = document.getElementById('handCanvas');
   const handCtx = handCanvas.getContext('2d');
-  function resizeHandCanvas(){
-    handCanvas.width = window.innerWidth;
-    handCanvas.height = window.innerHeight;
-  }
-  resizeHandCanvas();
-  window.addEventListener('resize', resizeHandCanvas);
-
+  function resizeHandCanvas(){ handCanvas.width = window.innerWidth; handCanvas.height = window.innerHeight; }
+  resizeHandCanvas(); window.addEventListener('resize', resizeHandCanvas);
   </script>
 </body>
 </html>
