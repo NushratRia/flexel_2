@@ -33,3 +33,13 @@ sounddevice==0.5.1
 SpeechRecognition==3.11.0
 torch==2.4.1
 transformers==4.45.1
+
+
+# --- Data handling (if you do any server-side CSV/Excel ops) ---
+pandas>=2.2
+openpyxl>=3.1
+
+
+# --- Prod server (optional; for local dev you can skip) ---
+waitress>=3.0
+
