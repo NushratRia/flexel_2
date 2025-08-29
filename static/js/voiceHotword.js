@@ -172,6 +172,14 @@
         },
 
         _dispatchCommand(transcript) {
+            // 1) Local parse first (quick wins)
+        const local = window.VDM_parse && window.VDM_parse(transcript);
+        if (local) {
+            // Try the standard path
+            if (window.VoiceActions && window.VoiceActions.execute(local)) return;
+            // Special local fallback for unmerge
+            if (local.action === 'unmerge' && window.VDM_tryLocalUnmerge && window.VDM_tryLocalUnmerge(local)) return;
+        }
         // Mirror your existing /api/voice-command flow + VoiceActions.execute fallback
         fetch("/api/voice-command", {
             method: "POST",

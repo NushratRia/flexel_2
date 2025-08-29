@@ -209,6 +209,24 @@
             return;
             }
 
+
+            // 🔸 NEW: Local semantic parser for select/scroll/zoom/copy/paste/merge/UNMERGE
+            {
+            const local = window.VDM_parse && window.VDM_parse(transcript);
+            if (local) {
+                // Try your normal executor path first
+                if (global.VoiceActions && global.VoiceActions.execute(local)) {
+                this._disarm();
+                return;
+                }
+                // Special local fallback for UNMERGE if executor doesn't handle it
+                if (local.action === 'unmerge' && window.VDM_tryLocalUnmerge && window.VDM_tryLocalUnmerge(local)) {
+                this._disarm();
+                return;
+                }
+            }
+            }
+
             // Otherwise, ask backend to parse into JSON
             fetch("/api/voice-command", {
             method: "POST",
