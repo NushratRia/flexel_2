@@ -23,7 +23,8 @@ Jinja2==3.1.6
 MarkupSafe==3.0.2
 
 # Media / ML (if you actually use them)
-mediapipe==0.10.21
+# mediapipe==0.10.21
+mediapipe==0.8.11
 opencv-python==4.11.0.86
 opencv-contrib-python==4.11.0.86
 pydub==0.25.1
