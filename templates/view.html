@@ -757,6 +757,7 @@
 
 
 
+<script src="{{ url_for('static', filename='js/gestureModeGate.js') }}"></script>
 <script src="{{ url_for('static', filename='js/gestureUtils.js') }}"></script>
 <script src="{{ url_for('static', filename='js/gestureActions.js') }}"></script>
 <script src="{{ url_for('static', filename='js/gestureArbiter500.js') }}"></script>
@@ -794,6 +795,9 @@
 
 <script src="{{ url_for('static', filename='js/tipsVideoHover.js') }}"></script>
 <script src="{{ url_for('static', filename='js/quickButtonsCapsules.js') }}"></script>
+
+
+
 
 
 
@@ -1009,7 +1013,9 @@
 
   const webcamFeed = new Camera(webcam, {
     onFrame: async () => {
-      await hands.send({ image: webcam });
+      if (gestureEnabled) {
+        await hands.send({ image: webcam });
+      }
     },
     width: 640,
     height: 480

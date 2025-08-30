@@ -1,22 +1,25 @@
 /* static/js/quickButtonsCapsules.js
- * Adds two "capsules" beside your existing quick buttons:
+ * Two pill "capsules" beside your existing quick buttons:
  *  - Action: [Undo] [Redo]
  *  - Zoom:   [−] [+]
  *
- * Requirements:
- *  - Does NOT change your HTML structure.
- *  - Prefers Handsontable's native undo/redo if available.
- *  - Also provides a fallback so typing in cells can be undone/redone
- *    even if the native stack wasn't enabled in time.
+ * No HTML changes. This file records EVERY user action we can observe
+ * (cell edits/paste/autofill, insert/remove rows, insert/remove columns,
+ * zoom) into a single local history so Undo/Redo step through ALL past
+ * actions, not just the most recent one.
+ *
+ * Handsontable’s native undo may still exist; we don’t rely on it.
+ * Our buttons always use the local history first.
  */
 (() => {
     const STRIP_ID = 'quickButtons';
     const HOT_ID   = 'hot';
 
     // ------------------------------
-    // Immediate, lightweight history
+    // Immediate, multi-step history
     // ------------------------------
     const ImmediateHistory = (() => {
+        const MAX = 500; // cap to avoid unbounded growth
         const undoStack = [];
         const redoStack = [];
 
@@ -25,6 +28,7 @@
         // action: { do: fn, undo: fn, label?: string }
         if (!action || typeof action.undo !== 'function') return;
         undoStack.push(action);
+        if (undoStack.length > MAX) undoStack.shift();
         clearRedo();
         }
         function canUndo() { return undoStack.length > 0; }
@@ -46,7 +50,7 @@
         return { push, undo, redo, canUndo, canRedo };
     })();
 
-    // expose a tiny API in case other scripts want to register actions later
+    // Optional public hook: other scripts can register actions
     window.ImmediateHistory = window.ImmediateHistory || {
         register: (action) => ImmediateHistory.push(action)
     };
@@ -63,7 +67,6 @@
     }
     const getHot = () => (window.hot || null);
 
-    // Wait until an element exists in DOM
     function waitForElement(selector, maxMs = 5000) {
         return new Promise((resolve, reject) => {
         const t0 = performance.now();
@@ -75,7 +78,6 @@
         });
     }
 
-    // wait for window.hot (Handsontable instance) to be ready
     function waitForHot(maxMs = 5000) {
         return new Promise((resolve, reject) => {
         const t0 = performance.now();
@@ -87,28 +89,8 @@
         });
     }
 
-    // enable Handsontable native undo/redo (works across versions)
-    function ensureHotUndoRedo(hot) {
-        try {
-        // turn on options (harmless if already on)
-        hot.updateSettings({ undo: true, undoRedo: true });
-        const p = hot.getPlugin && hot.getPlugin('undoRedo');
-        if (p && p.enablePlugin) p.enablePlugin();
-        } catch (e) {
-        console.warn('[Capsules] Unable to enable HOT undoRedo:', e);
-        }
-    }
-
-    function hasNativeUndo(hot) {
-        try {
-        if (typeof hot.undo === 'function' || typeof hot.redo === 'function') return true;
-        const p = hot.getPlugin && hot.getPlugin('undoRedo');
-        return !!(p && (typeof p.undo === 'function' || typeof p.redo === 'function'));
-        } catch (_) { return false; }
-    }
-
     // ------------------------------
-    // Zoom support (immediate stack)
+    // Zoom support (undoable)
     // ------------------------------
     const Z = { value: 1, min: 0.5, max: 2, step: 0.1 };
 
@@ -116,9 +98,7 @@
         const hotEl = $(`#${HOT_ID}`);
         if (!hotEl) return;
         hotEl.style.transformOrigin = 'top left';
-        // Prefer CSS zoom (Chromium)
         hotEl.style.zoom = String(Z.value);
-        // Fallback for browsers without zoom support (Safari)
         if (!('zoom' in hotEl.style)) {
         hotEl.style.transform = `scale(${Z.value})`;
         hotEl.style.width = `${100 / Z.value}%`;
@@ -133,7 +113,6 @@
         Z.value = next;
         applyZoom();
 
-        // Only register user-triggered changes as "immediate actions"
         if (fromUser) {
         ImmediateHistory.push({
             label: 'zoom',
@@ -145,80 +124,216 @@
     function zoomIn()  { setZoom(Z.value + Z.step); }
     function zoomOut() { setZoom(Z.value - Z.step); }
 
-    // ------------------------------------------
-    // Undo/Redo that prefer Handsontable history
-    // ------------------------------------------
+    // ------------------------------
+    // Undo/Redo buttons (local history)
+    // ------------------------------
     function doUndo() {
-        const hot = getHot();
-        if (hot) {
-        try {
-            if (typeof hot.undo === 'function') { hot.undo(); return; }
-            const p = hot.getPlugin && hot.getPlugin('undoRedo');
-            if (p && typeof p.undo === 'function') { p.undo(); return; }
-        } catch (e) {
-            console.warn('[Capsules] HOT undo error:', e);
-        }
-        }
-        // Fallback: our immediate stack (e.g., zoom or captured cell edits)
+        // Our local history is the source of truth for the buttons.
         if (ImmediateHistory.canUndo()) ImmediateHistory.undo();
     }
-
     function doRedo() {
-        const hot = getHot();
-        if (hot) {
-        try {
-            if (typeof hot.redo === 'function') { hot.redo(); return; }
-            const p = hot.getPlugin && hot.getPlugin('undoRedo');
-            if (p && typeof p.redo === 'function') { p.redo(); return; }
-        } catch (e) {
-            console.warn('[Capsules] HOT redo error:', e);
-        }
-        }
         if (ImmediateHistory.canRedo()) ImmediateHistory.redo();
     }
 
-    // ----------------------------------------------
-    // Fallback recorder for cell edits (only used if
-    // HOT native undo/redo isn't available)
-    // ----------------------------------------------
+    // ------------------------------
+    // Handsontable action capture
+    // ------------------------------
     let _replaying = false;
 
-    function wireCellEditFallback(hot) {
+    function snapshotCells(hot, rows, cols) {
+        const data = [];
+        for (let r of rows) {
+        const row = [];
+        for (let c of cols) row.push(hot.getDataAtCell(r, c));
+        data.push(row);
+        }
+        return data;
+    }
+
+    function setCells(hot, rows, cols, data) {
+        const batch = [];
+        for (let i = 0; i < rows.length; i++) {
+        for (let j = 0; j < cols.length; j++) {
+            batch.push([rows[i], cols[j], data[i][j], 'qb-replay']);
+        }
+        }
+        // Apply in a batch to reduce hook spam:
+        _replaying = true;
+        batch.forEach(([r, c, v, src]) => hot.setDataAtCell(r, c, v, src));
+        _replaying = false;
+    }
+
+    function allRowIndices(hot){ return Array.from({length: hot.countRows()}, (_, i) => i); }
+    function allColIndices(hot){ return Array.from({length: hot.countCols()}, (_, i) => i); }
+
+    function wireHandsontableHistory(hot) {
+        // 1) Cell edits / paste / autofill → one atomic action per event
         let pending = null;
 
         hot.addHook('beforeChange', (changes, source) => {
         if (!changes || source === 'loadData' || source === 'qb-replay' || _replaying) return;
-        // snapshot OLD values
         pending = changes.map(([r, c, oldVal, newVal]) => ({ r, c, oldVal, newVal }));
         });
 
         hot.addHook('afterChange', (changes, source) => {
         if (!changes || source === 'loadData' || source === 'qb-replay' || _replaying) return;
-
-        // If HOT has a working native stack, we DO NOT record a fallback entry.
-        if (hasNativeUndo(hot)) { pending = null; return; }
-
         if (!pending) return;
 
-        const before = pending.map(x => ({ r: x.r, c: x.c, v: x.oldVal }));
-        const after  = pending.map(x => ({ r: x.r, c: x.c, v: x.newVal }));
-        pending = null;
+        const rows = [...new Set(pending.map(x => x.r))].sort((a,b)=>a-b);
+        const cols = [...new Set(pending.map(x => x.c))].sort((a,b)=>a-b);
+        // Build before/after matrices for the union area:
+        const before = snapshotCells(hot, rows, cols);
+        // apply pending to "before" snapshot to build "after"
+        const map = new Map(pending.map(x => [`${x.r}:${x.c}`, x.newVal]));
+        const after = before.map((rowVals, i) => rowVals.map((v, j) => {
+            const r = rows[i], c = cols[j];
+            const key = `${r}:${c}`;
+            return map.has(key) ? map.get(key) : v;
+        }));
 
-        // push one atomic action
+        // When we captured "before", it was the state *prior to this change*?
+        // Actually, "before" now represents current (afterChange has already applied).
+        // So rebuild true BEFORE by applying oldVal at those coordinates:
+        const trueBefore = after.map(arr => arr.slice());
+        for (const {r,c,oldVal} of pending) {
+            const ri = rows.indexOf(r), ci = cols.indexOf(c);
+            if (ri >= 0 && ci >= 0) trueBefore[ri][ci] = oldVal;
+        }
+
         ImmediateHistory.push({
             label: 'cell-edit',
+            do:   () => { _replaying = true; setCells(hot, rows, cols, after);  _replaying = false; },
+            undo: () => { _replaying = true; setCells(hot, rows, cols, trueBefore); _replaying = false; }
+        });
+
+        pending = null;
+        });
+
+        // 2) INSERT ROWS
+        // Capture index/amount; redo = insert again; undo = remove them.
+        let lastCreateRow = null;
+        hot.addHook('beforeCreateRow', (index, amount, source) => {
+        if (_replaying) return;
+        lastCreateRow = { index, amount };
+        });
+        hot.addHook('afterCreateRow', (index, amount, source) => {
+        if (_replaying) return;
+        const { index: idx, amount: amt } = lastCreateRow || { index, amount };
+        ImmediateHistory.push({
+            label: 'insert-rows',
             do: () => {
             _replaying = true;
-            after.forEach(({ r, c, v }) => hot.setDataAtCell(r, c, v, 'qb-replay'));
+            try { hot.alter('insert_row', idx, amt, 'qb-replay'); }
+            catch { try { hot.alter('insert_row_above', idx, amt, 'qb-replay'); } catch(_){} }
             _replaying = false;
             },
             undo: () => {
             _replaying = true;
-            before.forEach(({ r, c, v }) => hot.setDataAtCell(r, c, v, 'qb-replay'));
+            try { hot.alter('remove_row', idx, amt, 'qb-replay'); } catch(_){}
+            _replaying = false;
+            }
+        });
+        lastCreateRow = null;
+        });
+
+        // 3) REMOVE ROWS (snapshot removed data to restore)
+        let removeRowSnap = null;
+        hot.addHook('beforeRemoveRow', (index, amount, physicalRows, source) => {
+        if (_replaying) return;
+        const rows = Array.from({length: amount}, (_,i)=>index+i);
+        const cols = allColIndices(hot);
+        const data = snapshotCells(hot, rows, cols);
+        removeRowSnap = { index, amount, cols, data };
+        });
+        hot.addHook('afterRemoveRow', (index, amount, physicalRows, source) => {
+        if (_replaying || !removeRowSnap) return;
+        const snap = removeRowSnap; removeRowSnap = null;
+        ImmediateHistory.push({
+            label: 'remove-rows',
+            do: () => {
+            _replaying = true;
+            try { hot.alter('remove_row', snap.index, snap.amount, 'qb-replay'); } catch(_){}
+            _replaying = false;
+            },
+            undo: () => {
+            _replaying = true;
+            try {
+                hot.alter('insert_row', snap.index, snap.amount, 'qb-replay');
+                // restore cell data into re-inserted rows
+                for (let i=0;i<snap.amount;i++){
+                for (let j=0;j<snap.cols.length;j++){
+                    hot.setDataAtCell(snap.index+i, snap.cols[j], snap.data[i][j], 'qb-replay');
+                }
+                }
+            } catch(_) {}
             _replaying = false;
             }
         });
         });
+
+        // 4) INSERT COLS
+        let lastCreateCol = null;
+        hot.addHook('beforeCreateCol', (index, amount, source) => {
+        if (_replaying) return;
+        lastCreateCol = { index, amount };
+        });
+        hot.addHook('afterCreateCol', (index, amount, source) => {
+        if (_replaying) return;
+        const { index: idx, amount: amt } = lastCreateCol || { index, amount };
+        ImmediateHistory.push({
+            label: 'insert-cols',
+            do: () => {
+            _replaying = true;
+            try { hot.alter('insert_col', idx, amt, 'qb-replay'); }
+            catch { try { hot.alter('insert_col_start', idx, amt, 'qb-replay'); } catch(_){} }
+            _replaying = false;
+            },
+            undo: () => {
+            _replaying = true;
+            try { hot.alter('remove_col', idx, amt, 'qb-replay'); } catch(_){}
+            _replaying = false;
+            }
+        });
+        lastCreateCol = null;
+        });
+
+        // 5) REMOVE COLS (snapshot removed data to restore)
+        let removeColSnap = null;
+        hot.addHook('beforeRemoveCol', (index, amount, physicalColumns, source) => {
+        if (_replaying) return;
+        const rows = allRowIndices(hot);
+        const cols = Array.from({length: amount}, (_,i)=>index+i);
+        const data = snapshotCells(hot, rows, cols);
+        removeColSnap = { index, amount, rows, data };
+        });
+        hot.addHook('afterRemoveCol', (index, amount, physicalColumns, source) => {
+        if (_replaying || !removeColSnap) return;
+        const snap = removeColSnap; removeColSnap = null;
+        ImmediateHistory.push({
+            label: 'remove-cols',
+            do: () => {
+            _replaying = true;
+            try { hot.alter('remove_col', snap.index, snap.amount, 'qb-replay'); } catch(_){}
+            _replaying = false;
+            },
+            undo: () => {
+            _replaying = true;
+            try {
+                hot.alter('insert_col', snap.index, snap.amount, 'qb-replay');
+                // restore data into re-inserted columns
+                for (let r=0;r<snap.rows.length;r++){
+                for (let j=0;j<snap.amount;j++){
+                    const c = snap.index + j;
+                    hot.setDataAtCell(snap.rows[r], c, snap.data[r][j], 'qb-replay');
+                }
+                }
+            } catch(_) {}
+            _replaying = false;
+            }
+        });
+        });
+
+        // (Optional) TODO: merge/unmerge capture if you enable the plugin later.
     }
 
     // ------------------------------
@@ -273,7 +388,7 @@
     }
 
     async function mount() {
-        // Wait for the quick buttons strip to exist
+        // Ensure the quick buttons strip exists
         let strip = document.getElementById(STRIP_ID);
         if (!strip) {
         try { strip = await waitForElement(`#${STRIP_ID}`); }
@@ -282,19 +397,18 @@
 
         injectStyles();
 
-        // Wait for HOT (if present), then enable native undo and wire fallback
+        // Handsontable hooks (if present)
         try {
-        const hot = await waitForHot();     // waits up to 5s
-        ensureHotUndoRedo(hot);             // turn on native stack
-        wireCellEditFallback(hot);          // capture typed edits if native stack isn't usable
+        const hot = await waitForHot();   // waits up to 5s
+        wireHandsontableHistory(hot);     // capture ALL major actions
         } catch (e) {
         console.warn('[Capsules] Proceeding without HOT instance:', e);
         }
 
-        // Capsules: History (Undo/Redo) + Zoom (−/+)
+        // Capsules: Action + Zoom
         const capHistory = buildCapsule('Action', [
-        { id:'qbUndo', title:'Undo last action', aria:'Undo', text:'Undo', onClick: doUndo },
-        { id:'qbRedo', title:'Redo last action', aria:'Redo', text:'Redo', onClick: doRedo },
+        { id:'qbUndo', title:'Undo', aria:'Undo', text:'Undo', onClick: doUndo },
+        { id:'qbRedo', title:'Redo', aria:'Redo', text:'Redo', onClick: doRedo },
         ]);
         const capZoom = buildCapsule('Zoom', [
         { id:'qbZoomOut', title:'Zoom out', aria:'Zoom out', text:'−', onClick: zoomOut },
@@ -304,7 +418,6 @@
         strip.appendChild(capHistory);
         strip.appendChild(capZoom);
 
-        // Start at 1.0 zoom (non-user apply)
         setZoom(1, /*fromUser=*/false);
     }
 

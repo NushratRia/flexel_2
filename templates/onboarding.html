@@ -221,11 +221,11 @@
   const taskList = document.getElementById('taskList');
   function hintFor(id){
     if(id==='sel_g') return '     Pinch a shape.';
-    if(id==='sel_v') return '     Say “flexee select shape”.';
+    if(id==='sel_v') return '     Say “flexee select”.';
     if(id==='zoom_g') return '      Thumb–middle spread to zoom in; close to zoom out.';
     if(id==='zoom_v') return '      Say “flexee zoom in/out”.';
-    if(id==='del_g') return '     Flick down, or drag to 🗑️.';
-    if(id==='del_v') return '     Say “flexee delete shape”.';
+    if(id==='del_g') return '     Select & quickly flick down, or drag to 🗑️.';
+    if(id==='del_v') return '     Say “flexee delete”.';
     return '';
   }
   function renderTasks(){
