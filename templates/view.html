@@ -757,7 +757,6 @@
 
 
 
-<script src="{{ url_for('static', filename='js/gestureModeGate.js') }}"></script>
 <script src="{{ url_for('static', filename='js/gestureUtils.js') }}"></script>
 <script src="{{ url_for('static', filename='js/gestureActions.js') }}"></script>
 <script src="{{ url_for('static', filename='js/gestureArbiter500.js') }}"></script>
@@ -795,9 +794,6 @@
 
 <script src="{{ url_for('static', filename='js/tipsVideoHover.js') }}"></script>
 <script src="{{ url_for('static', filename='js/quickButtonsCapsules.js') }}"></script>
-
-
-
 
 
 
@@ -1013,14 +1009,18 @@
 
   const webcamFeed = new Camera(webcam, {
     onFrame: async () => {
-      if (gestureEnabled) {
-        await hands.send({ image: webcam });
-      }
+      // Read mode directly each frame so this works even before variables are declared
+      const sel  = document.getElementById('modeSelector');
+      const mode = sel ? sel.value : 'wimp';
+      if (mode !== 'gesture' && mode !== 'combination') return;
+
+      await hands.send({ image: webcam });
     },
     width: 640,
     height: 480
   });
   webcamFeed.start();
+
 
   window.GestureActions && window.GestureActions.init(hot, document.getElementById('hot'), hands);
 
@@ -1050,7 +1050,7 @@
     if (mode === "voice") {
       voiceEnabled = true;
       console.log("Voice input enabled, webcam input disabled.");
-      toggleBtn.style.display = "flex";
+      //toggleBtn.style.display = "flex";
       voiceChatbox.style.display = "flex";
     } 
     else if (mode === "gesture") {
@@ -1058,12 +1058,12 @@
       webcamOverlay.style.display = "block";
       handCanvas.style.display = "block";
       console.log("Gesture input enabled, voice input disabled.");
-      toggleBtn.style.display = "none";
+      //toggleBtn.style.display = "none";
       voiceChatbox.style.display = "none";
     } 
     else if (mode === "wimp") {
       console.log("WIMP mode: No voice or webcam input.");
-      toggleBtn.style.display = "none";
+      //toggleBtn.style.display = "none";
       voiceChatbox.style.display = "none";
     } 
     else if (mode === "combination") {
@@ -1072,10 +1072,11 @@
       webcamOverlay.style.display = "block";
       handCanvas.style.display = "block";
       console.log("Combination mode: Voice + Gesture input enabled.");
-      toggleBtn.style.display = "flex";
+      //toggleBtn.style.display = "flex";
       voiceChatbox.style.display = "flex";
     }
   });
+  modeSelector.dispatchEvent(new Event('change'));
 
 
 
@@ -1276,19 +1277,19 @@
 
 
   const chatbox = document.getElementById('voiceChatbox');
-  const toggleBtn = document.getElementById('toggleChatBtn');
+  //const toggleBtn = document.getElementById('toggleChatBtn');
   const hideBtn = document.getElementById('hideChatBtn');
 
   // Show Chatbox
-  toggleBtn.addEventListener('click', () => {
-    chatbox.style.display = 'flex';
-    toggleBtn.classList.add('hidden');
-  });
+  //toggleBtn.addEventListener('click', () => {
+  //  chatbox.style.display = 'flex';
+  //  toggleBtn.classList.add('hidden');
+  //});
 
   // Hide Chatbox
   hideBtn.addEventListener('click', () => {
     chatbox.style.display = 'none';
-    toggleBtn.classList.remove('hidden');
+    //toggleBtn.classList.remove('hidden');
   });
 
 
@@ -1483,12 +1484,12 @@ function executeSortColumn(colLetter, direction) {
   (function hookVoiceQuickButton(){
     const voiceBtn = document.getElementById('voiceQB');
     const voiceChatbox = document.getElementById('voiceChatbox');
-    const toggleBtn    = document.getElementById('toggleChatBtn');
+    //const toggleBtn    = document.getElementById('toggleChatBtn');
 
     function setVoiceUIVisible(show) {
-      if (!voiceChatbox || !toggleBtn) return;
+      if (!voiceChatbox) return;
       voiceChatbox.style.display = show ? 'flex' : 'none';
-      toggleBtn.style.display    = show ? 'flex' : 'none';
+      //toggleBtn.style.display    = show ? 'flex' : 'none';
     }
 
     voiceBtn.addEventListener('click', () => {
