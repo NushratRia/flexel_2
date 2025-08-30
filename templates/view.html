@@ -450,12 +450,19 @@
   }
   #tipsPanel .tip-gif img{ width:100%; display:block; }
   #tipsPanel .tip-gif .caption{
-    position:absolute; left:0; right:0; bottom:0;
-    background:rgba(0,0,0,.72); color:#fff; font-size:11px; line-height:1.25;
-    padding:4px 6px; opacity:0; transform:translateY(6px);
-    transition:opacity .15s ease, transform .15s ease;
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0,0,0,.72);
+    color: #fff;
+    font-size: 11px;
+    line-height: 1.25;
+    padding: 4px 6px;
+    opacity: 1;                /* always visible */
+    transform: translateY(0); 
   }
-  #tipsPanel .tip-gif:hover .caption{ opacity:1; transform:translateY(0); }
+  /*#tipsPanel .tip-gif:hover .caption{ opacity:1; transform:translateY(0); }*/
 
 
 
@@ -643,56 +650,63 @@
       <img class="gif-hover" loading="lazy"
           data-still="/static/img/gifs/pinch.png"
           data-gif="/static/gifs/selecting.gif"
+          data-mov="/static/gifs/select.mp4"
           alt="Pinch to select">
-      <figcaption class="caption">Pinch → Select cell / row / column</figcaption>
+      <figcaption class="caption">Select → Pinch</figcaption>
     </figure>
 
     <figure class="tip-gif">
       <img class="gif-hover" loading="lazy"
           data-still="/static/img/gifs/open.png"
           data-gif="/static/gifs/scrolling.gif"
+          data-mov="/static/gifs/scroll.mp4"
           alt="Scroll">
-      <figcaption class="caption">Swipe → Scroll (up/down/left/right)</figcaption>
+      <figcaption class="caption">Swipe → Scroll</figcaption>
     </figure>
 
     <figure class="tip-gif">
       <img class="gif-hover" loading="lazy"
           data-still="/static/img/gifs/flick.png"
           data-gif="/static/gifs/delete_2.gif"
+          data-mov="/static/gifs/delete.mp4"
           alt="Delete by flick">
-      <figcaption class="caption">Flick down (below midline) → Delete target</figcaption>
+      <figcaption class="caption">Delete → Pinch & flick down</figcaption>
     </figure>
 
     <figure class="tip-gif">
       <img class="gif-hover" loading="lazy"
           data-still="/static/img/gifs/zoom.png"
           data-gif="/static/gifs/zoom.gif"
+          data-mov="/static/gifs/zoom.mp4"
           alt="Zoom in">
-      <figcaption class="caption">Thumb–middle apart → Zoom In, Thumb–middle close → Zoom Out</figcaption>
+      <figcaption class="caption">Zoom → Thumb–middle apart/close</figcaption>
     </figure>
 
     <figure class="tip-gif">
       <img class="gif-hover" loading="lazy"
           data-still="/static/img/gifs/collide.png"
           data-gif="/static/gifs/merging.gif"
+          data-mov="/static/gifs/merge.mp4"
           alt="Zoom out">
-      <figcaption class="caption">Pinches collide → Merge</figcaption>
+      <figcaption class="caption">Merge → Pinches collide</figcaption>
     </figure>
 
     <figure class="tip-gif">
       <img class="gif-hover" loading="lazy"
           data-still="/static/img/gifs/copy.png"
           data-gif="/static/gifs/copying.gif"
+          data-mov="/static/gifs/copy.mp4"
           alt="Copy">
-      <figcaption class="caption">Pinch select & other fist → Copy</figcaption>
+      <figcaption class="caption">Copy → Pinch & other fist</figcaption>
     </figure>
 
     <figure class="tip-gif">
       <img class="gif-hover" loading="lazy"
           data-still="/static/img/gifs/paste.png"
           data-gif="/static/gifs/pasting.gif"
+          data-mov="/static/gifs/paste.mp4"
           alt="Paste">
-      <figcaption class="caption">Open fist → Paste</figcaption>
+      <figcaption class="caption">Paste → Pinch & open fist</figcaption>
     </figure>
   </div>
 
@@ -776,6 +790,11 @@
 <!-- Multi-sheet -->
 <script src="{{ url_for('static', filename='js/multiSheetFetch.js') }}"></script>
 <script src="{{ url_for('static', filename='js/multiSheetTabs.js') }}"></script>
+
+
+<script src="{{ url_for('static', filename='js/tipsVideoHover.js') }}"></script>
+<script src="{{ url_for('static', filename='js/quickButtonsCapsules.js') }}"></script>
+
 
 
 
