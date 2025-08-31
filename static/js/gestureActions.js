@@ -362,30 +362,30 @@
         // });
 
         // ---- 2) SCROLL (open palm swipe up/down) ----
-        handsInfo.forEach(h => {
-            if (h.openPalm) {
-            const vy   = h.k.vy;                         // normalized units per ms
-            const mag  = Math.min(1, Math.abs(vy) * 1200);
-            const vxMag = Math.abs(h.k.vx) * 1200;       // horizontal velocity guard
+        // handsInfo.forEach(h => {
+        //     if (h.openPalm) {
+        //     const vy   = h.k.vy;                         // normalized units per ms
+        //     const mag  = Math.min(1, Math.abs(vy) * 1200);
+        //     const vxMag = Math.abs(h.k.vx) * 1200;       // horizontal velocity guard
 
-            if (mag > 0.6 && vxMag < 0.25) {
-                const dir     = vy < 0 ? -1 : 1;           // up/down
-                const anchor  = this._hot.getSelectedLast() || [0, 0, 0, 0];
-                const nextRow = Math.max(0, (anchor[0] || 0) + (dir * 5));
+        //     if (mag > 0.6 && vxMag < 0.25) {
+        //         const dir     = vy < 0 ? -1 : 1;           // up/down
+        //         const anchor  = this._hot.getSelectedLast() || [0, 0, 0, 0];
+        //         const nextRow = Math.max(0, (anchor[0] || 0) + (dir * 5));
 
-                GU.rank(this._score, 'scroll', 0.75 + 0.25 * mag, {
-                action: 'scroll',
-                // _src: 'vy', // ⬅️ tag old path
-                row: nextRow + 1,
-                col: (anchor[1] || 0) + 1,
-                ptScreen: GU.toScreenXY(h.indexTip)
-                });
+        //         GU.rank(this._score, 'scroll', 0.75 + 0.25 * mag, {
+        //         action: 'scroll',
+        //         // _src: 'vy', // ⬅️ tag old path
+        //         row: nextRow + 1,
+        //         col: (anchor[1] || 0) + 1,
+        //         ptScreen: GU.toScreenXY(h.indexTip)
+        //         });
 
-                // cancel paste intent only when a real scroll is registered
-                this._pasteArmed = false;
-            }
-            }
-        });
+        //         // cancel paste intent only when a real scroll is registered
+        //         this._pasteArmed = false;
+        //     }
+        //     }
+        // });
 
         // // ---- 3) UNDO / 4) REDO (horizontal swipe with open palm) ----
         // handsInfo.forEach(h => {

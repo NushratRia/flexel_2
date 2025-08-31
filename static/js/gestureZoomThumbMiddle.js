@@ -1,3 +1,12 @@
+
+
+
+
+
+
+
+
+
 /* static/js/gestureZoomThumbMiddle.js
  * Zoom with thumb–middle distance, non-overlapping & clean HUD:
  *  - Require thumb–index separation for BOTH IN/OUT (prevents select overlap)
@@ -32,26 +41,58 @@
   function setScale(ga, s){ ga._zoomScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, s)); }
 
   // Apply scale only to grid content (wtHider) so overlays/toasts remain unscaled
+  // function applyScale(ga) {
+  //   const scale = getScale(ga);
+  //   // Prefer the live instance structure
+  //   const htRoot = (ga._hot && ga._hot.rootElement) || document.querySelector('.handsontable');
+  //   const hider  = htRoot && htRoot.querySelector('.ht_master .wtHider');
+  //   if (hider) {
+  //     hider.style.transformOrigin = '0 0';
+  //     hider.style.transform = `scale(${scale})`;
+  //   } else {
+  //     // Fallback: try generic master/hider path
+  //     const h = document.querySelector('.ht_master .wtHider');
+  //     if (h) {
+  //       h.style.transformOrigin = '0 0';
+  //       h.style.transform = `scale(${scale})`;
+  //     } else {
+  //       // Last resort: body zoom (may affect HUD; only used if no HOT DOM found)
+  //       document.body.style.zoom = String(scale);
+  //     }
+  //   }
+  // }
+
+
+  // Apply scale to ALL Handsontable hiders (master + overlays) so they stay aligned
   function applyScale(ga) {
     const scale = getScale(ga);
-    // Prefer the live instance structure
+
+    // Prefer the live instance root if available
     const htRoot = (ga._hot && ga._hot.rootElement) || document.querySelector('.handsontable');
-    const hider  = htRoot && htRoot.querySelector('.ht_master .wtHider');
-    if (hider) {
-      hider.style.transformOrigin = '0 0';
-      hider.style.transform = `scale(${scale})`;
-    } else {
-      // Fallback: try generic master/hider path
-      const h = document.querySelector('.ht_master .wtHider');
-      if (h) {
-        h.style.transformOrigin = '0 0';
-        h.style.transform = `scale(${scale})`;
-      } else {
-        // Last resort: body zoom (may affect HUD; only used if no HOT DOM found)
-        document.body.style.zoom = String(scale);
-      }
+    if (!htRoot) {
+      // fallback (if no HOT yet)
+      document.body.style.zoom = String(scale);
+      return;
+    }
+
+    // Reset any old body zoom from a previous fallback
+    document.body.style.zoom = '';
+
+    // Scale every .wtHider: master + .ht_clone_top + .ht_clone_left + corner
+    const hiders = htRoot.querySelectorAll('.wtHider');
+    hiders.forEach(h => {
+      h.style.transformOrigin = '0 0';
+      h.style.willChange = 'transform';
+      h.style.backfaceVisibility = 'hidden';
+      h.style.transform = `translateZ(0) scale(${scale})`;
+    });
+
+    // Ask HOT to recompute overlay sizes/positions so headers track the body
+    if (ga._hot && typeof ga._hot.render === 'function') {
+      ga._hot.render(); // triggers overlays adjust & realignment
     }
   }
+
 
   function toPx(lm){ return { x: lm.x * global.innerWidth, y: lm.y * global.innerHeight }; }
 

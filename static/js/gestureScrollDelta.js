@@ -1,3 +1,16 @@
+
+
+
+
+
+
+
+
+
+
+
+
+
 /* static/js/gestureScrollDelta.js
  * Scroll via LM9 deltas in SCREEN pixels (Python-equivalent):
  *   dx = last.x - x, dy = last.y - y
