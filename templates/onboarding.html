@@ -240,9 +240,14 @@
   }
   function mark(id){ if(!state[id]){ state[id]=true; renderTasks(); checkDone(); } }
   function checkDone(){
-    const all = Object.values(state).every(Boolean);
-    if(all){ confetti(); notify('All set! Redirecting…'); localStorage.setItem('eda_onboarded_v1','1'); setTimeout(()=>location.href='/sheets',1100); }
+  const all = Object.values(state).every(Boolean);
+  if(all){
+    confetti();
+    notify('All set! Click “Next” to continue.');   // <- new copy
+    localStorage.setItem('eda_onboarded_v1','1');   // keep progress if you like
+    // setTimeout(()=>location.href='/sheets',1100); // <- remove/disable this line
   }
+}
 
   /* ====== UI REFS ====== */
   const sheet = document.getElementById('sheet');
@@ -546,7 +551,7 @@
   const nextBtn = document.getElementById('next') || document.getElementById('skip');
   if (nextBtn) {
     nextBtn.addEventListener('click', () => {
-      localStorage.setItem('eda_onboarded_v1', '1');
+      //localStorage.setItem('eda_onboarded_v1', '1');
       location.href = '/sheets';
     });
   }
