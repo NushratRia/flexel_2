@@ -666,12 +666,11 @@
     </ul>
     <!-- 📋 Example Commands -->
   <div style="margin: 8px 0; font-size: 13px;">
+    <strong>Example Commands</strong>
     <strong>📌 Selecting</strong>
     <ul>
       <li>“Select A1”</li>
       <li>“Select B2 to D5”</li>
-      <li>“Select row 3”</li>
-      <li>“Select column C”</li>
       <li>“Scroll down to row 10” / “Scroll up to row 1”</li>
       <li>“Scroll to row 20”</li>
     </ul>
@@ -680,16 +679,16 @@
     <ul>
       <li>“Delete A2” / “Clear B3:D4”</li>
       <li>“Delete this” (while pointing with hand)</li>
-      <li>“Remove row 5”</li>
-      <li>“Clear column C”</li>
+      <li>“Remove B5”</li>
+      <li>“Clear C2”</li>
     </ul>
 
     <strong>✍️ Writing</strong>
     <ul>
       <li>“Write 50 in C2”</li>
       <li>“Write hello here” (points to current target)</li>
-      <li>“Put 5 in row 10”</li>
-      <li>“Fill 0 into column B”</li>
+      <li>“Put 5 in C10”</li>
+      <li>“Fill 0 into B5”</li>
     </ul>
 
     <strong>📋 Copy / Paste</strong>
@@ -724,8 +723,8 @@
     <ul>
       <li>“Sort column A ascending”</li>
       <li>“Sort column B descending”</li>
-      <li>“Sum column C” / “Total this column”</li>
-      <li>“Average column D” / “Mean of this”</li>
+      <li>“Sum C5 to C10”</li>
+      <li>“Average D4 to D20”</li>
       <!--li>“Remove duplicates in this range”</li-->
       <!--li>“Fill missing with N/A”</li-->
     </ul>
@@ -758,7 +757,7 @@
     <figure class="tip-gif">
       <img class="gif-hover" loading="lazy"
           data-still="/static/img/gifs/pinch.png"
-          data-gif="/static/gifs/selecting.gif"
+          
           data-mov="/static/gifs/select.mp4"
           alt="Pinch to select">
       <figcaption class="caption">Pinch to Select</figcaption>
@@ -767,7 +766,7 @@
     <figure class="tip-gif">
       <img class="gif-hover" loading="lazy"
           data-still="/static/img/gifs/open.png"
-          data-gif="/static/gifs/scrolling.gif"
+          
           data-mov="/static/gifs/scroll.mp4"
           alt="Scroll">
       <figcaption class="caption">Scroll to Swipe</figcaption>
@@ -776,7 +775,7 @@
     <figure class="tip-gif">
       <img class="gif-hover" loading="lazy"
           data-still="/static/img/gifs/flick.png"
-          data-gif="/static/gifs/delete_2.gif"
+          
           data-mov="/static/gifs/delete.mp4"
           alt="Delete by flick">
       <figcaption class="caption">Pinch & flick down to Delete</figcaption>
@@ -785,7 +784,7 @@
     <figure class="tip-gif">
       <img class="gif-hover" loading="lazy"
           data-still="/static/img/gifs/zoom.png"
-          data-gif="/static/gifs/zoom.gif"
+          
           data-mov="/static/gifs/zoom.mp4"
           alt="Zoom in">
       <figcaption class="caption">Standard Zoom in / out</figcaption>
@@ -794,7 +793,7 @@
     <figure class="tip-gif">
       <img class="gif-hover" loading="lazy"
           data-still="/static/img/gifs/collide.png"
-          data-gif="/static/gifs/merging.gif"
+          
           data-mov="/static/gifs/merge.mp4"
           alt="Zoom out">
       <figcaption class="caption">Pinches collide to Merge</figcaption>
@@ -803,7 +802,7 @@
     <figure class="tip-gif">
       <img class="gif-hover" loading="lazy"
           data-still="/static/img/gifs/copy.png"
-          data-gif="/static/gifs/copying.gif"
+          
           data-mov="/static/gifs/copy.mp4"
           alt="Copy">
       <figcaption class="caption">Pinch & other fist to Copy</figcaption>
@@ -812,7 +811,7 @@
     <figure class="tip-gif">
       <img class="gif-hover" loading="lazy"
           data-still="/static/img/gifs/paste.png"
-          data-gif="/static/gifs/pasting.gif"
+          
           data-mov="/static/gifs/paste.mp4"
           alt="Paste">
       <figcaption class="caption">Pinch & open fist to Paste</figcaption>
@@ -1454,6 +1453,7 @@ function colLettersToIndex(colLetters) {
   }
   return n - 1; // zero-based index
 }
+
 
 function executeSum(cellRange) {
   const match = String(cellRange).match(/^\s*([A-Z]+)(\d+)\s*:\s*([A-Z]+)(\d+)\s*$/i);
