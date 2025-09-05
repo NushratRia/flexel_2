@@ -1,30 +1,25 @@
 /* static/js/gestureDeleteDwell.js
- * Delete with target "dwell-lock":
- *  - While PINCHING, we observe the candidate (cell/row/col) under your fingertip.
- *  - If the SAME candidate stays under the finger for DWELL_MS, we LOCK it for this pinch.
- *  - A strong DOWNWARD flick (LM9 Δy > 40) below midline+50 deletes the LOCKED target.
- *  - The lock stays until you release the pinch (no drifting to "random" cells).
- *  - Ranks into GestureActions to reuse your toast/visuals. Legacy delete is disabled.
+
  */
 (function (global) {
     const GA = () => global.GestureActions;
     const GU = () => global.GestureUtils;
 
     // Tunables
-    const DWELL_MS            = 450;  // how long you must hold over the same target to lock
-    const FLICK_DELTA_Y_PX    = 40;   // downward flick threshold (pixels)
-    const MIDLINE_OFFSET_PX   = 50;   // only delete when below midline+50
-    const DELETE_COOLDOWN_MS  = 500;  // pace deletes per hand
+    const DWELL_MS            = 450;  
+    const FLICK_DELTA_Y_PX    = 40;   
+    const MIDLINE_OFFSET_PX   = 50;   
+    const DELETE_COOLDOWN_MS  = 500;  
 
     // State
-    const lastY = {};                     // { h0: ypx, h1: ypx }
-    const cooldownUntil = {};             // { h0: t,   h1: t }
-    const pinchNow = {};                  // { h0: bool, h1: bool }
+    const lastY = {};                    
+    const cooldownUntil = {};             
+    const pinchNow = {};                 
 
-    const candId = {};                    // { h0: "cell:3,5" | "row:7" | "col:2" }
-    const candSince = {};                 // { h0: timestamp when candidate started }
-    const lockedId = {};                  // { h0: same id string once locked }
-    const lockedTarget = {};              // { h0: {type,row?,col?} }
+    const candId = {};                    
+    const candSince = {};                 
+    const lockedId = {};                  
+    const lockedTarget = {};              
 
     function key(i){ return `h${i}`; }
     function canFire(k, t){ return t >= (cooldownUntil[k] || 0); }
@@ -75,7 +70,7 @@
         const ga = GA();
         if (!ga._hands) return false;
 
-        // Turn off legacy delete inside GA without editing its file
+        
         ga._disableLegacyDelete = true;
 
         // Subscribe without replacing others

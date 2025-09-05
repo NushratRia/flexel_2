@@ -1,7 +1,5 @@
 /* menu-actions.js
- * Wires <div onclick="menuAction('…')"> items to real actions.
- * - Requires: window.hot (Handsontable instance), #hot container exists.
- * - No HTML structure changes; everything is done via JS.
+
  */
 
 (function () {

@@ -1,8 +1,5 @@
 /* static/js/gestureDeleteBinHudBottom.js
- * Black bin HUD fixed at bottom-center:
- *  - Shows while PINCHING and LM9 is below midline+50px (armed zone)
- *  - Pulses when per-frame Δy > 40px (strong flick feedback)
- *  - Purely visual; logic remains in your delete plugin.
+
  */
 (function (global) {
     const GA = () => global.GestureActions;

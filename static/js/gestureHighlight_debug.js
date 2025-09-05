@@ -1,9 +1,4 @@
-/******************************************************
- * Gesture Highlight Debug Script
- * - Highlights single cells
- * - Highlights entire column if over column header (A,B,C...)
- * - Highlights entire row if over row header (1,2,3...)
- ******************************************************/
+
 let highlightedCellsDebug = [];
 let debugPointerMain;
 

@@ -1,12 +1,3 @@
-/* static/js/voiceActions.js
- * Thin action layer for Handsontable actions triggered by voice.
- * NOW WITH: deictic fan-out to BOTH hands ("this"/"here"/"there") using window.__handLiveRects.
- *
- * Exposes:
- *  - VoiceActions.init(hot, containerEl)
- *  - VoiceActions.execute(cmd)            // accepts A1 or "this"/"here"/"there"
- *  - window.__maybeHandleLocalVoice(str)  // optional: parse "delete this", "write 50 here" locally
- */
 
 (function (global) {
   const VoiceActions = {

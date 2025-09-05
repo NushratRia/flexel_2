@@ -1,9 +1,5 @@
 /* static/js/hotwordBootstrap.js
- * Purpose: Get mic permission with the smallest possible friction and
- *          auto-start hotword mode once permission is granted.
- * No changes to your existing files are required.
- *
- * Works with: window.VoiceChat (from voicechat.js)
+
  */
 (function (global) {
     const Boot = {

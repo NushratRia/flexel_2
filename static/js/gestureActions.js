@@ -1,6 +1,4 @@
 /* static/js/gestureActions.js
- * Implements 9 spreadsheet gestures with score ranking + hitboxes.
- * Shows a popup text toast near the index tip after each successful action.
  */
 (function (global) {
     const GU = global.GestureUtils;
@@ -10,11 +8,11 @@
         _container: null,
         _hands: null,
         _score: GU.newScoreBucket(),
-        _kin: {},              // per-hand velocity cache
+        _kin: {},              
         _twoHandPrevDist: null,
-        _twoHandStartRC: null, // for merge + autofill range corners
-        _copyArmed: false,     // pinch selected, waiting for other fist
-        _pasteArmed: false,    // closed fist -> open near target
+        _twoHandStartRC: null, 
+        _copyArmed: false,    
+        _pasteArmed: false, 
         _successCue: null,
         _cueTimeout: 0,
 
@@ -27,22 +25,22 @@
 
         // swipe detection (for undo/redo)
         _swipe: {},
-        _SWIPE_MIN_D: 0.12,    // min horizontal travel (normalized units)
-        _SWIPE_MAX_VERT: 0.06, // max vertical drift for a valid horizontal swipe
-        _SWIPE_MIN_MS: 120,    // min duration
-        _SWIPE_MAX_MS: 900,    // max duration
+        _SWIPE_MIN_D: 0.12,    
+        _SWIPE_MAX_VERT: 0.06, 
+        _SWIPE_MIN_MS: 120,    
+        _SWIPE_MAX_MS: 900,    
 
         init(hot, containerEl, hands) {
         this._hot = hot;
         this._container = containerEl;
         this._hands = hands;
 
-        // If your GestureUtils has an onResults multiplexer, use it
+        // If  GestureUtils has an onResults multiplexer, use it
         if (window.GestureUtils && typeof window.GestureUtils.multiplexOnResults === 'function') {
             window.GestureUtils.multiplexOnResults(hands);
         }
 
-        // (Re)attach your existing highlighter safely
+        // (Re)attach  existing highlighter safely
         try {
             const canvasElement = document.getElementById('handCanvas');
             const canvasCtx = canvasElement ? canvasElement.getContext('2d') : null;
@@ -51,10 +49,10 @@
             }
         } catch (_) { /* noop */ }
 
-        // Register this module's results handler
+       
         hands.onResults((res) => this._onResults(res));
 
-        // legacy success canvas (we use toast now, but keep it)
+        // legacy success canvas 
         this._successCue = document.createElement('canvas');
         Object.assign(this._successCue.style, {
             position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
@@ -75,7 +73,7 @@
         this._successCue.height = window.innerHeight;
         },
 
-        // kept for compatibility; no longer used for success cue by default
+     
         _drawSuccessAt(ptScreen) {
         const ctx = this._successCue.getContext('2d');
         ctx.clearRect(0, 0, this._successCue.width, this._successCue.height);
@@ -121,7 +119,7 @@
             this._toastHost = host;
         },
 
-        // ✅ Top-middle popup version
+        // 
         _showToast(text) {
             this._ensureToastHost();
             const el = document.createElement('div');
@@ -268,8 +266,7 @@
             }
         });
 
-        // Header-aware prepass (probe into the sheet to get the true rc under the finger)
-        // Keeps your structure: only sets h.a1 when pinching a header.
+        
         {
         const hot = this._hot;
         if (hot) {
@@ -278,8 +275,8 @@
             const rowRange  = (r)=> `${colLetters(0)}${r+1}:${colLetters(hot.countCols()-1)}${r+1}`;
             const colRange  = (c)=> { const L=colLetters(c); return `${L}1:${L}${hot.countRows()}`; };
 
-            const PROBE_PX_Y = 24; // how far below the column header to sample
-            const PROBE_PX_X = 24; // how far right of the row header to sample
+            const PROBE_PX_Y = 24; 
+            const PROBE_PX_X = 24; 
 
             handsInfo.forEach(h => {
             if (!h.pinching) return;
@@ -287,10 +284,10 @@
             const el = GU.elementAt(h.indexTip);
             if (!el || !el.closest) return;
 
-            // Work in real screen pixels (GU.toScreenXY mirrors X for us)
+            
             const pt = GU.toScreenXY(h.indexTip);
 
-            // Helper: get td at a screen point, then rc
+            
             const tdAtXY = (x, y) => {
                 const el2 = document.elementFromPoint(
                 Math.max(0, Math.min(window.innerWidth - 1, x)),

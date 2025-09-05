@@ -1,5 +1,5 @@
 /* static/js/gestureUtils.js
- * Small helpers for gesture math, hitboxes, A1 refs, palm state, and scoring.
+ 
  */
 (function (global) {
     const GU = {

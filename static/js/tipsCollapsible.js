@@ -1,9 +1,4 @@
-/* static/js/tipsCollapsible.js
- * Collapsible sections in the Tips panel.
- * - Initial state: collapsed
- * - Images remain visible when collapsed
- * - No toggle for the "Interaction Modes" heading
- */
+
 (function (global) {
     "use strict";
 

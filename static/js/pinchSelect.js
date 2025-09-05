@@ -1,10 +1,4 @@
-/******************************************************
- * Pinch-to-Select Gesture Script
- * - Detects pinch between thumb (#4) and index finger (#8)
- * - If pinch occurs over a highlighted cell, marks it as "selected"
- *   (Extended: pinch over column header A/B/C selects full column;
- *              pinch over row header 1/2/3 selects full row)
- ******************************************************/
+
 
 function setupPinchSelect(hands, canvasElement, canvasCtx) {
     let lastPinchTime = 0;

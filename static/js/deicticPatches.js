@@ -1,6 +1,5 @@
 /* static/js/deicticPatches.js
- * Lets users say things like "sort this", "write 52 here", etc.
- * Zero edits to existing code: we patch at the public function boundaries.
+
  */
 (function (global) {
     'use strict';

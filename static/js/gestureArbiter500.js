@@ -1,9 +1,5 @@
 /* static/js/gestureArbiter500.js
- * Global arbitration for ALL gestures:
- *  - 500 ms cooldown between commits (any gesture)
- *  - Uses ranks gathered via GU.rank; commits only if top score is strong
- *  - If top vs second is too close (different categories), treat as ambiguous → no commit
- *  - No structural changes to existing code
+ 
  */
 (function (global) {
     const GA = () => global.GestureActions;

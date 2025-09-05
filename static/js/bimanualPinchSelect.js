@@ -1,9 +1,5 @@
 /* static/js/bimanualPinchSelect.js
- * Independent two-hand pinch selection for Handsontable + HUD toasts.
- * - Each hand pinch "locks in" its own target (cell/row/col) → stored as a rect snapshot.
- * - No combining. The last hand to pinch also drives the visible HOT selection.
- * - Deictic actions read both hand snapshots and act on both.
- * - If DeicticToast is present, shows "Selected A2 & B4" style toasts.
+
  */
 (function (global) {
     'use strict';

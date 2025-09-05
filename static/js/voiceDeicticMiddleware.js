@@ -1,17 +1,4 @@
-/* static/js/voiceDeicticMiddleware.js
- * Two-hand deictic voice middleware + visual cues.
- *  - Handles "select/delete/write ... here/this" LOCALLY for BOTH hands (via DeicticRun + range:"this")
- *  - Adds rich parsing for copy/paste/merge + UNMERGE (cells/rows/cols/ranges) with semantic synonyms
- *  - Shows HUD toasts like "Selected A2 & B4", "Deleted A2 & B4", "Wrote 50 → A2 & B4"
- *  - Very tolerant to ASR mishears: here/hear/hair/there/thiss/dis, right→write, etc.
- *  - Falls back to server, then to local execution (unmerge) if VoiceActions doesn’t handle it.
- *
- * Requires (recommended):
- *  - static/js/bimanualPinchSelect.js  (populates window.__lastTwoHandTargets)
- *  - static/js/deicticActionsBridge.js (provides window.DeicticRun that understands range:"this")
- * Optional:
- *  - global.DeicticToast.show(op, targets[, meta]) → nice HUD; otherwise a simple inline toast is used.
- */
+
 (function (global) {
     'use strict';
 

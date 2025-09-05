@@ -1,6 +1,5 @@
 /* static/js/multiSheetFetch.js
- * Fetch { sheets: [{ name, headers, rows }] } from a helper route.
- * No dependencies on your existing files.
+
  */
 (function (global) {
     const MultiSheetFetch = {

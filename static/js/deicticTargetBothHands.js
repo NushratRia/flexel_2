@@ -1,6 +1,4 @@
 /* static/js/deicticTargetBothHands.js
- * Track BOTH hands' current targets every frame (cell/row/col → rect).
- * Exposes: window.__handLiveRects = { L: {r1,c1,r2,c2} | null, R: {…} | null }
  */
 (function (global) {
     'use strict';

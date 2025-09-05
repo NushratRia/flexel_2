@@ -1,13 +1,4 @@
-/* static/js/voicechat.js
- * Hotword + one-shot voice command handler using Web Speech API.
- * - Hotwords: "flexee", "hey flexee", "ok flexee"
- * - After hotword: listens for ONE final command; if none within 5s, disarms
- * - Auto-resumes listening for hotword after each command or timeout
- *
- * Exposes: window.VoiceChat.init(hot, container), .start(), .stop()
- * Depends on (optionally): addToChatLog(), executeSum/executeAverage/executeWriteValue/executeSortColumn()
- * And (important): window.VoiceActions + window.__maybeHandleLocalVoice (from voiceActions.js)
- */
+
 (function (global) {
     const SpeechRecognition = global.SpeechRecognition || global.webkitSpeechRecognition;
 

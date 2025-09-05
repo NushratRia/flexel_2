@@ -8,10 +8,7 @@
 
 
 /* static/js/gestureZoomThumbMiddle.js
- * Zoom with thumb–middle distance, non-overlapping & clean HUD:
- *  - Require thumb–index separation for BOTH IN/OUT (prevents select overlap)
- *  - Scale only .ht_master .wtHider (grid content), so HUD/toasts stay crisp
- *  - 500ms local cooldown; global arbiter still enforces 500ms + rank margin
+
  */
 (function (global) {
   const GA = () => global.GestureActions;

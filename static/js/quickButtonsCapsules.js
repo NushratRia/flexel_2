@@ -1,23 +1,11 @@
 /* static/js/quickButtonsCapsules.js
- * Two pill "capsules" beside your existing quick buttons:
- *  - Action: [Undo] [Redo]
- *  - Zoom:   [−] [+]
- *
- * No HTML changes. This file records EVERY user action we can observe
- * (cell edits/paste/autofill, insert/remove rows, insert/remove columns,
- * zoom) into a single local history so Undo/Redo step through ALL past
- * actions, not just the most recent one.
- *
- * Handsontable’s native undo may still exist; we don’t rely on it.
- * Our buttons always use the local history first.
+
  */
 (() => {
     const STRIP_ID = 'quickButtons';
     const HOT_ID   = 'hot';
 
-    // ------------------------------
-    // Immediate, multi-step history
-    // ------------------------------
+  
     const ImmediateHistory = (() => {
         const MAX = 500; // cap to avoid unbounded growth
         const undoStack = [];
@@ -55,9 +43,7 @@
         register: (action) => ImmediateHistory.push(action)
     };
 
-    // ------------------------------
-    // Utilities
-    // ------------------------------
+    
     const $ = (sel, root=document) => root.querySelector(sel);
     function make(tag, cls, text){
         const el = document.createElement(tag);
@@ -89,9 +75,7 @@
         });
     }
 
-    // ------------------------------
-    // Zoom support (undoable)
-    // ------------------------------
+    
     const Z = { value: 1, min: 0.5, max: 2, step: 0.1 };
 
     function applyZoom() {
@@ -124,9 +108,7 @@
     function zoomIn()  { setZoom(Z.value + Z.step); }
     function zoomOut() { setZoom(Z.value - Z.step); }
 
-    // ------------------------------
-    // Undo/Redo buttons (local history)
-    // ------------------------------
+    
     function doUndo() {
         // Our local history is the source of truth for the buttons.
         if (ImmediateHistory.canUndo()) ImmediateHistory.undo();
@@ -135,9 +117,7 @@
         if (ImmediateHistory.canRedo()) ImmediateHistory.redo();
     }
 
-    // ------------------------------
-    // Handsontable action capture
-    // ------------------------------
+   
     let _replaying = false;
 
     function snapshotCells(hot, rows, cols) {
@@ -333,7 +313,7 @@
         });
         });
 
-        // (Optional) TODO: merge/unmerge capture if you enable the plugin later.
+        
     }
 
     // ------------------------------

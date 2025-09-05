@@ -1,6 +1,5 @@
 /* static/js/multiSheetTabs.js
- * Adds a tabs bar into the existing toolbar and swaps data via hot.loadData(...)
- * Keeps your first row frozen as headers (like your current table).
+
  */
 (function (global) {
     function colLabel(i) {

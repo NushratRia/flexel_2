@@ -1,10 +1,5 @@
 /* static/js/deicticToast.js
- * Minimal toast HUD that can describe actions on TWO deictic targets.
- * Export: window.DeicticToast.show(action, targets, opts?)
- *   - action: "selected" | "deleted" | "write"
- *   - targets: array of strings OR {kind:'cell'|'row'|'col', row?, col?, rowIndex?, colIndex?}
- *   - opts.value: for write -> value to show
- *   - opts.final: optional final range text (e.g., "A2:B4", "columns C–F", "rows 2–4")
+
  */
 (function (global) {
     'use strict';

@@ -12,17 +12,7 @@
 
 
 /* static/js/gestureScrollDelta.js
- * Scroll via LM9 deltas in SCREEN pixels (Python-equivalent):
- *   dx = last.x - x, dy = last.y - y
- *   if |dy| > 30 and |dy| > |dx|*(1+HYST) → step row (dy>0 up, dy<0 down)
- *   if |dx| > 40 and |dx| >= |dy|*(1+HYST) → step col (dx>0 left, dx<0 right)
- *
- * Anti-confusion:
- * - GLOBAL cooldown between any two scrolls (STEP_COOLDOWN_MS)
- * - AXIS LOCK window (AXIS_LOCK_MS) to avoid instant axis flipping
- * - HYSTERESIS so one axis must clearly dominate
- * - OPEN PALM ONLY (and NOT pinching) so it won’t overlap with delete
- * - Calls GA._commitTopGesture() so you get the toast immediately
+
  */
 (function (global) {
     const GA = () => global.GestureActions;

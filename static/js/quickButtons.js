@@ -1,8 +1,4 @@
-/* static/js/quickButtons.js
- * Positions 🎙/💡 quick buttons to the LEFT of #controlPanel, never overlapping.
- * Wires the chat "×" to hide the thread.
- * Makes Tips open on load, and the Tips “×” closes it.
- */
+
 (function (global) {
     "use strict";
 

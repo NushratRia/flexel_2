@@ -1,6 +1,5 @@
 // static/js/gestureModeGate.js
-// Gate all gesture work to only 'gesture' & 'combination' modes.
-// Zero changes to other files.
+
 
 (function () {
   const ALLOWED = new Set(['gesture', 'combination']);

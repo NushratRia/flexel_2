@@ -1,10 +1,4 @@
-/* static/js/voiceHotword.js
- * Passive hotword -> one-command capture (5s silence timeout).
- * Works alongside your existing mic button + VoiceActions.
- *
- * Requirements: Chrome (webkitSpeechRecognition), microphone permission.
- * Non‑destructive: you can keep your current mic flow; this only adds hotword.
- */
+
 (function (global) {
     const HotwordVoice = {
         // configurable
