@@ -358,12 +358,58 @@
 
   .htCore td.gesture-highlight,
   .htCore th.gesture-highlight {
-      background-color: rgba(0, 255, 0, 0.4) !important;
-      outline: 2px solid limegreen !important;
+      background-color: rgba(89, 119, 89, 0.4) !important;
+      /*outline: 2px solid limegreen !important; */
+      outline: 2px solid rgba(160, 210, 255, 0.8) !important;
+      box-shadow: 0 0 6px rgba(160, 210, 255, 0.6);
       transition: background-color 0.1s ease;
   }
 
+
+  
+  /* glow */
+  .htCore td.gesture-selected {
+    background-color: rgba(120,200,255,0.35) !important;
+    box-shadow: 0 0 18px rgba(120,200,255,0.85);
+  }
+  
+  /* Persistent blue selection rectangle (secondary hand) */
+  .htCore td.gesture-pinned {
+    position: relative;
+  }
+
+  .htCore td.gesture-pinned::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border: 2px solid #4a8cff;   /* Google-Sheets-like blue */
+    border-radius: 2px;
+    pointer-events: none;
+  }
+
+
+
+  /* Pinch-selected cell: temporary glow */
+  .htCore td.gesture-selected,
+  .htCore th.gesture-selected {
+    background-color: rgba(120, 200, 255, 0.35) !important;
+
+    outline: 3px solid rgba(140, 210, 255, 0.95) !important;
+
+    box-shadow:
+      0 0 10px rgba(140, 210, 255, 0.9),
+      0 0 20px rgba(140, 210, 255, 0.6),
+      inset 0 0 6px rgba(255,255,255,0.35);
+
+    transition:
+      box-shadow 0.25s ease,
+      outline 0.25s ease,
+      background-color 0.25s ease;
+  }
+
+
   /* Selected cell via pinch gesture 
+
   .htCore td.gesture-selected {
       background-color: #555 !important;
       color: white !important;
@@ -415,7 +461,7 @@
   #tipsPanel h2,
   #tipsPanel h3,
   #tipsPanel h4 {
-    color: #F58800;
+    color: #002b66;
   }
 
   /* Collapsible UI */
@@ -664,9 +710,10 @@
       <li>And say your command (e.g., “sort column A”).</li>
       <li>The system will execute the task hands-free.</li>
     </ul>
+    <h4>Example Voice Commands:</h4>
     <!-- 📋 Example Commands -->
-  <div style="margin: 8px 0; font-size: 13px;">
-    <h4>Example Commands:</h4>
+  <div style="max-height: 200px; overflow-y: auto; padding-right: 8px; margin: 8px 0; font-size: 13px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; border: 1px solid rgba(0,0,0,.08); border-radius: 8px;">
+  <!--div style="margin: 8px 0; font-size: 13px;"-->
     <strong>📌 Selecting</strong>
     <ul>
       <li>“Select A1”</li>
@@ -716,7 +763,7 @@
     <ul>
       <li>“Zoom in”</li>
       <li>“Zoom out”</li>
-      <li>“Reset zoom”</li>
+      <!--li>“Reset zoom”</li-->
     </ul>
 
     <strong>📊 Data ops</strong>
@@ -743,14 +790,12 @@
     <p>Perform tasks with hand gestures:</p>
     <ul>
       <li><strong>Selecting</strong>: Pinch fingers together on the target cell.</li>
-      <li><strong>Scrolling</strong>: Swipe up/down.</li>
-      <!--li><strong>Undo</strong>: Long swipe left with an open palm.</li>
-      <li><strong>Redo</strong>: Long swipe right with an open palm.</li-->
+      <!--li><strong>Scrolling</strong>: Swipe up/down.</li>
       <li><strong>Delete</strong>: Select then flick downward.</li>
       <li><strong>Merge</strong>: Select with two hands and collide them.</li>
       <li><strong>Zoom In/Out</strong>: Standard pinch-to-zoom gesture using all fingers.</li>
       <li><strong>Copy</strong>: Pinch to select data, then close the other fist.</li>
-      <li><strong>Paste</strong>: Open fist.</li>
+      <li><strong>Paste</strong>: Open fist.</li-->
     </ul>
     <!--img src="/static/img/tool_tip.png" alt="Tool tips" style="width:100%; max-width:100%; height:auto; display:block; margin:0 auto;"-->
     <div class="tips-gif-grid">
@@ -763,13 +808,13 @@
       <figcaption class="caption">Pinch to Select</figcaption>
     </figure>
 
-    <figure class="tip-gif">
+    <!--figure class="tip-gif">
       <img class="gif-hover" loading="lazy"
           data-still="/static/img/gifs/open.png"
           
           data-mov="/static/gifs/scroll.mp4"
           alt="Scroll">
-      <figcaption class="caption">Scroll to Swipe</figcaption>
+      <figcaption class="caption">Swipe to Scroll</figcaption>
     </figure>
 
     <figure class="tip-gif">
@@ -815,7 +860,7 @@
           data-mov="/static/gifs/paste.mp4"
           alt="Paste">
       <figcaption class="caption">Pinch & open fist to Paste</figcaption>
-    </figure>
+    </figure-->
   </div>
 
     
@@ -892,10 +937,10 @@
 <script src="{{ url_for('static', filename='js/deicticActionsBridge.js') }}"></script>
 
 <!-- Extended gestures -->
-<script src="{{ url_for('static', filename='js/gestureScrollDelta.js') }}"></script>
+<!--script src="{{ url_for('static', filename='js/gestureScrollDelta.js') }}"></script>
 <script src="{{ url_for('static', filename='js/gestureDeleteFlick.js') }}"></script>
 <script src="{{ url_for('static', filename='js/gestureDeleteBinHud.js') }}"></script>
-<script src="{{ url_for('static', filename='js/gestureZoomThumbMiddle.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gestureZoomThumbMiddle.js') }}"></script-->
 
 <!-- Multi-sheet -->
 <script src="{{ url_for('static', filename='js/multiSheetFetch.js') }}"></script>
@@ -1769,6 +1814,27 @@ function executeSortColumn(colLetter, direction) {
       }
     }
   });
+
+
+
+
+
+
+  function glowSelectedCell(row, col, duration = 3000) {
+    const hot = window.hot || (window.GestureActions && GestureActions._hot);
+    if (!hot) return;
+
+    const td = hot.getCell(row, col);
+    if (!td) return;
+
+    td.classList.add('gesture-selected');
+
+    setTimeout(() => {
+      td.classList.remove('gesture-selected');
+    }, duration);
+  }
+
+
 })();
 
 
