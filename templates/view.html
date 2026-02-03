@@ -961,12 +961,14 @@
 
 <script>
   const opacitySlider = document.getElementById('opacitySlider');
-    const videoElement = document.querySelector('video'); 
+    const videoElement = document.querySelector('video');
 
     // video opacity when slider changes
-    opacitySlider.addEventListener('input', () => {
-        videoElement.style.opacity = opacitySlider.value;
-    });
+    if (opacitySlider) {
+        opacitySlider.addEventListener('input', () => {
+            if (videoElement) videoElement.style.opacity = opacitySlider.value;
+        });
+    }
 
 
 
