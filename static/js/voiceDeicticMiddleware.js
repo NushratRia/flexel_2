@@ -282,9 +282,21 @@
         if (/^undo\b/.test(s)) return { action:'undo', confidence:0.95 };
         if (/^redo\b/.test(s)) return { action:'redo', confidence:0.95 };
 
-        // DELETE (clear) — deictic → BOTH hands via "this"
-        if (/^(delete|clear|remove)\b/.test(s) && /\b(this|here)\b/.test(s)){
-        return { action:'delete', range:'this', confidence:0.92 };
+        // DELETE (clear) — deictic → BOTH hands via "this", or bare "delete" for current selection
+        if (/^(delete|clear|remove)\b/.test(s)) {
+            // With explicit deictic word
+            if (/\b(this|here|there|hear|hair)\b/.test(s)) {
+                return { action:'delete', range:'this', confidence:0.92 };
+            }
+            // With explicit range
+            const spanCells = extractCellSpan(s); if (spanCells) return { action:'delete', range: spanCells, confidence:0.96 };
+            const cols = extractColRange(s);      if (cols)     return { action:'delete', range: cols,      confidence:0.95 };
+            const rows = extractRowRangeOrSingle(s); if (rows)  return { action:'delete', range: rows,      confidence:0.95 };
+            const a1 = extractA1(s);              if (a1)       return { action:'delete', range: a1,        confidence:0.94 };
+            // Bare "delete" with no range → use current selection
+            if (/^(delete|clear|remove)$/.test(s.trim())) {
+                return { action:'delete', range:'this', confidence:0.88 };
+            }
         }
 
         // --- COPY (cells/rows/cols/ranges + deictic) ---
@@ -354,12 +366,17 @@
 
 
         // --- MERGE (cells/rows/cols/ranges + deictic) ---
-        if (/\b(merge|combine|join)\b/i.test(s)) {
-        const spanCells = extractCellSpan(s); if (spanCells) return { action:'merge', range: spanCells, confidence:0.96 };
-        const cols = extractColRange(s);      if (cols)     return { action:'merge', range: cols,      confidence:0.95 };
-        const rows = extractRowRangeOrSingle(s); if (rows)  return { action:'merge', range: rows,      confidence:0.95 };
-        const a1 = extractA1(s);              if (a1)       return { action:'merge', range: a1,        confidence:0.90 };
-        if (/\b(this|here|there|hear|hair)\b/i.test(s))     return { action:'merge', range:'this',     confidence:0.90 };
+        // Also match "march" as common ASR mishear of "merge"
+        if (/\b(merge|combine|join|march|marsh|merch|marge)\b/i.test(s)) {
+            const spanCells = extractCellSpan(s); if (spanCells) return { action:'merge', range: spanCells, confidence:0.96 };
+            const cols = extractColRange(s);      if (cols)     return { action:'merge', range: cols,      confidence:0.95 };
+            const rows = extractRowRangeOrSingle(s); if (rows)  return { action:'merge', range: rows,      confidence:0.95 };
+            const a1 = extractA1(s);              if (a1)       return { action:'merge', range: a1,        confidence:0.90 };
+            if (/\b(this|here|there|hear|hair)\b/i.test(s))     return { action:'merge', range:'this',     confidence:0.90 };
+            // Bare "merge" (or ASR variant) with no range → use current selection
+            if (/^(merge|march|marsh|merch|marge|combine|join)$/i.test(s.trim())) {
+                return { action:'merge', range:'this', confidence:0.85 };
+            }
         }
 
         // --- UNMERGE (NEW) — semantic variants: unmerge/split/separate/break merge/remove merge ---
