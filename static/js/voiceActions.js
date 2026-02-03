@@ -45,9 +45,13 @@
         const fillVal = (cmd.value != null) ? String(cmd.value) : "N/A";
         return this._fillMissingMulti(cmd.range, fillVal);
       }
-      // merge aliases for convenience
+      // merge aliases for convenience - route through deictic merge handler
       if (cmd.action === "merge_rows" || cmd.action === "merge_cols" || cmd.action === "merge_cells") {
         if (!cmd.range) cmd.range = "this";
+        // Use VoiceMergeHandler for deictic merges
+        if (global.VoiceMergeHandler && global.VoiceMergeHandler.isDeicticMerge(cmd)) {
+          return global.VoiceMergeHandler.execute(cmd);
+        }
         return this.merge(cmd.range);
       }
 
@@ -56,7 +60,14 @@
       if (cmd.action === "scroll") return this.scroll(cmd.row, cmd.col);
       if (cmd.action === "undo") return this.undo();
       if (cmd.action === "redo") return this.redo();
-      if (cmd.action === "merge" && cmd.range) return this.merge(cmd.range);
+      // Use VoiceMergeHandler for deictic merge, fallback to legacy for A1 notation
+      if (cmd.action === "merge") {
+        if (global.VoiceMergeHandler && global.VoiceMergeHandler.isDeicticMerge(cmd)) {
+          return global.VoiceMergeHandler.execute(cmd);
+        }
+        if (cmd.range) return this.merge(cmd.range);
+        return false;
+      }
       if (cmd.action === "zoom") return this.zoom(cmd.direction, cmd.step);
       if (cmd.action === "copy") return this.copyTSV(cmd.range);
       if (cmd.action === "paste") return this.pasteTSV(cmd.at);

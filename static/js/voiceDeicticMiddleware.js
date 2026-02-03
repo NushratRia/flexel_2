@@ -354,12 +354,20 @@
 
 
         // --- MERGE (cells/rows/cols/ranges + deictic) ---
+        // Enhanced to support "merge these", "merge rows", "merge columns" for two-hand deictic selection
         if (/\b(merge|combine|join)\b/i.test(s)) {
         const spanCells = extractCellSpan(s); if (spanCells) return { action:'merge', range: spanCells, confidence:0.96 };
         const cols = extractColRange(s);      if (cols)     return { action:'merge', range: cols,      confidence:0.95 };
         const rows = extractRowRangeOrSingle(s); if (rows)  return { action:'merge', range: rows,      confidence:0.95 };
         const a1 = extractA1(s);              if (a1)       return { action:'merge', range: a1,        confidence:0.90 };
-        if (/\b(this|here|there|hear|hair)\b/i.test(s))     return { action:'merge', range:'this',     confidence:0.90 };
+        // Deictic merge commands - "merge these", "merge this", "merge here", "merge rows", "merge columns"
+        if (/\b(these|this|here|there|hear|hair)\b/i.test(s)) return { action:'merge', range:'this', confidence:0.92 };
+        // "merge rows" or "merge columns" without specific range = deictic merge
+        if (/\bmerge\s+(rows?|columns?|cols?)\b/i.test(s) && !extractColRange(s) && !extractRowRangeOrSingle(s)) {
+            return { action:'merge', range:'this', confidence:0.90 };
+        }
+        // Bare "merge" command = deictic merge using current selections
+        if (/^merge\s*$/i.test(s.trim())) return { action:'merge', range:'this', confidence:0.88 };
         }
 
         // --- UNMERGE (NEW) — semantic variants: unmerge/split/separate/break merge/remove merge ---
