@@ -886,8 +886,8 @@
 <script src="{{ url_for('static', filename='js/gestureUtils.js') }}"></script>
 <script src="{{ url_for('static', filename='js/gestureActions.js') }}"></script>
 <script src="{{ url_for('static', filename='js/gestureArbiter500.js') }}"></script>
-<script src="{{ url_for('static', filename='js/voiceActions.js') }}"></script>
-<script src="{{ url_for('static', filename='js/voiceMergeHandler.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voiceActions.js') }}?v=2"></script>
+<script src="{{ url_for('static', filename='js/voiceMergeHandler.js') }}?v=2"></script>
 <script src="{{ url_for('static', filename='js/voicechat.js') }}"></script>
 <script src="{{ url_for('static', filename='js/hotwordBootstrap.js') }}"></script>
 <script src="{{ url_for('static', filename='js/quickButtons.js') }}"></script>
@@ -896,7 +896,7 @@
 <script src="{{ url_for('static', filename='js/deicticTargetBothHands.js') }}"></script>
 <script src="{{ url_for('static', filename='js/bimanualPinchSelect.js') }}"></script>
 <script src="{{ url_for('static', filename='js/deicticPatches.js') }}"></script>
-<script src="{{ url_for('static', filename='js/voiceDeicticMiddleware.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voiceDeicticMiddleware.js') }}?v=2"></script>
 <script src="{{ url_for('static', filename='js/deicticHud.js') }}"></script>
 <script src="{{ url_for('static', filename='js/deicticActionsBridge.js') }}"></script>
 
@@ -925,7 +925,7 @@
 <script src="{{ url_for('static', filename='js/hotwordBootstrap.js') }}"></script>
 <script src="{{ url_for('static', filename='js/voiceActions.js') }}"></script>
 <script src="{{ url_for('static', filename='js/voiceMergeHandler.js') }}"></script>
-<script src="{{ url_for('static', filename='js/voiceDeicticMiddleware.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voiceDeicticMiddleware.js') }}?v=2"></script>
 
 <!-- Quick UI helpers -->
 <script src="{{ url_for('static', filename='js/quickButtons.js') }}"></script>
@@ -1309,6 +1309,7 @@
 
                 // Try local parsing first (handles ASR mishears and deictic commands)
                 const localCmd = window.VDM_parse ? window.VDM_parse(transcript) : null;
+                console.log('[VoiceLocal] transcript:', transcript, '→ parsed:', localCmd);
                 if (localCmd && localCmd.action && localCmd.action !== 'none' && (localCmd.confidence || 0) >= 0.70) {
                     console.log('[VoiceLocal] Handling locally:', localCmd);
                     // Execute locally parsed command
