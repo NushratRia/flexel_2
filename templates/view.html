@@ -1304,8 +1304,21 @@
 
             // only add final unique transcripts to chat log
             if (event.results[event.results.length - 1].isFinal && transcript !== lastTranscript) {
-                addToChatLog("user", transcript); 
+                addToChatLog("user", transcript);
                 lastTranscript = transcript;
+
+                // Try local parsing first (handles ASR mishears and deictic commands)
+                const localCmd = window.VDM_parse ? window.VDM_parse(transcript) : null;
+                if (localCmd && localCmd.action && localCmd.action !== 'none' && (localCmd.confidence || 0) >= 0.70) {
+                    console.log('[VoiceLocal] Handling locally:', localCmd);
+                    // Execute locally parsed command
+                    if (window.VoiceActions && window.VoiceActions.execute(localCmd)) {
+                        addToChatLog("bot", "🎯 " + localCmd.action + (localCmd.range ? ` ${localCmd.range}` : ''));
+                        return;
+                    }
+                }
+
+                // Fall back to server if local parsing didn't handle it
                     fetch("/api/voice-command", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
