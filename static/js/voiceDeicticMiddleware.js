@@ -34,8 +34,10 @@
         // deictics
         .replace(/\b(hair|hare|hear)\b/g, ' here ')
         .replace(/\b(dis|diss)\b/g, ' this ')
+        // mark family (common mishear: "march" -> "mark")
+        .replace(/\b(march|marque|mock)\b/g, ' mark ')
         // merge family
-        .replace(/\b(march|marsh|merch|marge)\b/g, ' merge ')
+        .replace(/\b(marsh|merch|marge)\b/g, ' merge ')
         .replace(/\b(merges)\b/g, ' merge ')
         // ultra-common: "merge this" → "mercedes"
         .replace(/\b(mercedes)\b/g, ' merge this ')
@@ -219,8 +221,8 @@
         return ok;
         }
 
-        // SELECT this
-        if ((has('select') || has('highlight')) && anyDeictic) {
+        // SELECT / MARK this
+        if ((has('select') || has('highlight') || has('mark') || has('tag') || has('flag')) && anyDeictic) {
         const a1 = cell() || (col() ? `${col()}1` : (rowIndex() ? `A${rowIndex()}` : null));
         if (a1 && global.VoiceActions && global.VoiceActions.execute({ action:'select', range:a1 })) {
             showOpToast('Selected', [{kind:'cell', row: (parseA1Range(a1).r1), col: (parseA1Range(a1).c1)}]);
@@ -285,6 +287,15 @@
         // DELETE (clear) — deictic → BOTH hands via "this"
         if (/^(delete|clear|remove)\b/.test(s) && /\b(this|here)\b/.test(s)){
         return { action:'delete', range:'this', confidence:0.92 };
+        }
+
+        // --- MARK (select/highlight cells/rows/cols/ranges + deictic) ---
+        if (/\b(mark|tag|flag)\b/i.test(s)) {
+        const spanCells = extractCellSpan(s); if (spanCells) return { action:'select', range: spanCells, confidence:0.96 };
+        const cols = extractColRange(s);      if (cols)     return { action:'select', range: cols,      confidence:0.95 };
+        const rows = extractRowRangeOrSingle(s); if (rows)  return { action:'select', range: rows,      confidence:0.95 };
+        const a1 = extractA1(s);              if (a1)       return { action:'select', range: a1,        confidence:0.94 };
+        if (/\b(this|here|there|hear|hair)\b/i.test(s))     return { action:'select', range:'this',     confidence:0.92 };
         }
 
         // --- COPY (cells/rows/cols/ranges + deictic) ---
@@ -453,7 +464,7 @@
     global.VDM_parse = parseLocal;
     global.VDM_tryLocalUnmerge = tryLocalUnmerge;
 
-    console.info('[VoiceDeicticMiddleware] ready: deictic + extended copy/paste/merge + UNMERGE.');
+    console.info('[VoiceDeicticMiddleware] ready: deictic + extended copy/paste/merge/mark + UNMERGE.');
 })(window);
 
 
