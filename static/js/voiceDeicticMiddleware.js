@@ -401,18 +401,17 @@
         if (/^(sum|total)\b/.test(s) && /\bthis\b/.test(s) && col()){ const C=col(); return { action:'sum', range:`${C}1:${C}9999`, confidence:0.9 }; }
         if (/^(average|mean)\b/.test(s) && /\bthis\b/.test(s) && col()){ const C=col(); return { action:'average', range:`${C}1:${C}9999`, confidence:0.9 }; }
 
+        // Support explicit column letters: "sum column C", "average column D"
+        if (/\b(sum|total)\b/i.test(s)) {
+            const m = s.match(/\b(?:column|col)\s+([a-z]+)\b/i);
+            if (m) return { action:'sum', range: `${m[1].toUpperCase()}1:${m[1].toUpperCase()}999999`, confidence:0.94 };
+        }
+        if (/\b(average|mean)\b/i.test(s)) {
+            const m = s.match(/\b(?:column|col)\s+([a-z]+)\b/i);
+            if (m) return { action:'average', range: `${m[1].toUpperCase()}1:${m[1].toUpperCase()}999999`, confidence:0.94 };
+        }
+
         return null; // let server or other local logic handle it
-    }
-
-
-    // Support explicit column letters: "sum column C", "average column D"
-    if (/\b(sum|total)\b/i.test(s)) {
-    const m = s.match(/\b(?:column|col)\s+([a-z]+)\b/i);
-    if (m) return { action:'sum', range: `${m[1].toUpperCase()}1:${m[1].toUpperCase()}999999`, confidence:0.94 };
-    }
-    if (/\b(average|mean)\b/i.test(s)) {
-    const m = s.match(/\b(?:column|col)\s+([a-z]+)\b/i);
-    if (m) return { action:'average', range: `${m[1].toUpperCase()}1:${m[1].toUpperCase()}999999`, confidence:0.94 };
     }
 
     // ---------- local fallback runner for UNMERGE ----------
