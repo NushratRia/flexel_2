@@ -33,9 +33,9 @@
         t = (' ' + t + ' ')
         // deictics
         .replace(/\b(hair|hare|hear)\b/g, ' here ')
-        .replace(/\b(dis|diss)\b/g, ' this ')
+        .replace(/\b(dis|diss|these)\b/g, ' this ')
         // merge family
-        .replace(/\b(march|marsh|merch|marge)\b/g, ' merge ')
+        .replace(/\b(march|marsh|merch|marge|mark)\b/g, ' merge ')
         .replace(/\b(merges)\b/g, ' merge ')
         // ultra-common: "merge this" → "mercedes"
         .replace(/\b(mercedes)\b/g, ' merge this ')
