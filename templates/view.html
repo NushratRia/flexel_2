@@ -47,6 +47,19 @@
       background: #f8f9fa;
     }
 
+    /* Allow Handsontable to receive mouse events */
+    #deicticHud,
+    #gestureHud,
+    #gestureOverlay,
+    #overlay,
+    #handOverlay,
+    #handCanvas,
+    #gestureCanvas,
+    canvas {
+      pointer-events: none !important;
+    }
+
+
     #hot {
       flex: 1;
       overflow: hidden;
@@ -278,6 +291,49 @@
     overflow-y: auto;
     color: #333;
   }
+
+  /* Voice listening glow (5s) */
+  /* Stronger amber glow (more visible) */
+  @keyframes voiceGlowPulseAmberStrong {
+    0% {
+      box-shadow:
+        0 2px 10px rgba(0, 0, 0, 0.22),
+        0 0 0 rgba(255, 170, 0, 0);
+      border-color: #cfcfcf;
+      filter: brightness(1);
+    }
+    50% {
+      box-shadow:
+        0 2px 10px rgba(0, 0, 0, 0.22),
+        0 0 10px rgba(255, 170, 0, 0.55),
+        0 0 26px rgba(255, 170, 0, 0.65),
+        0 0 48px rgba(255, 170, 0, 0.45);
+      border-color: rgba(255, 170, 0, 0.95);
+      filter: brightness(1.06);
+    }
+    100% {
+      box-shadow:
+        0 2px 10px rgba(0, 0, 0, 0.22),
+        0 0 0 rgba(255, 170, 0, 0);
+      border-color: #cfcfcf;
+      filter: brightness(1);
+    }
+  }
+
+  #voiceChatbox.listening-glow {
+    border-width: 2px; 
+    animation: voiceGlowPulseAmberStrong 2.4s ease-in-out infinite; 
+  } */
+
+
+
+
+
+
+
+
+
+
 
   #micBtn {
     background: #007bff;
@@ -657,10 +713,10 @@
             <div style="display: flex; align-items: center; gap: 6px;">
             <label for="modeSelector" style="font-size: 12px;">Mode:</label>
             <select id="modeSelector" title="Select Mode" style="font-size: 12px; padding: 2px 4px;">
-                <option value="combination">Combination</option>
+                <option value="combination">Flexee</option>
                 <option value="wimp">WIMP</option>
-                <option value="gesture">Gesture</option>
-                <option value="voice">Voice</option>
+                <!--option value="gesture">Gesture</option>
+                <option value="voice">Voice</option-->
                 
             </select>
             </div>
@@ -872,6 +928,16 @@
       <li>Point to data with a gesture and say a voice command like “sort this.”</li>
       <li>Switch between WIMP, Voice, and Gesture seamlessly in the same workflow.</li>
     </ul>
+
+
+
+
+
+
+
+    
+
+    
   </div>
 
 </aside>
@@ -882,31 +948,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.min.js"></script>
-<!--script src="{{ url_for('static', filename='js/gestureHighlight_debug.js') }}"></script>
-<script src="{{ url_for('static', filename='js/gestureUtils.js') }}"></script>
-<script src="{{ url_for('static', filename='js/gestureActions.js') }}"></script>
-<script src="{{ url_for('static', filename='js/gestureArbiter500.js') }}"></script>
-<script src="{{ url_for('static', filename='js/voiceActions.js') }}"></script>
-<script src="{{ url_for('static', filename='js/voicechat.js') }}"></script>
-<script src="{{ url_for('static', filename='js/hotwordBootstrap.js') }}"></script>
-<script src="{{ url_for('static', filename='js/quickButtons.js') }}"></script>
-<script src="{{ url_for('static', filename='js/tipsCollapsible.js') }}"></script>
-
-<script src="{{ url_for('static', filename='js/deicticTargetBothHands.js') }}"></script>
-<script src="{{ url_for('static', filename='js/bimanualPinchSelect.js') }}"></script>
-<script src="{{ url_for('static', filename='js/deicticPatches.js') }}"></script>
-<script src="{{ url_for('static', filename='js/voiceDeicticMiddleware.js') }}"></script>
-<script src="{{ url_for('static', filename='js/deicticHud.js') }}"></script>
-<script src="{{ url_for('static', filename='js/deicticActionsBridge.js') }}"></script>
-
-<script src="{{ url_for('static', filename='js/gestureScrollDelta.js') }}"></script>
-
-<script src="{{ url_for('static', filename='js/gestureDeleteFlick.js') }}"></script>
-<script src="{{ url_for('static', filename='js/gestureDeleteBinHud.js') }}"></script>
-
-<script src="{{ url_for('static', filename='js/gestureZoomThumbMiddle.js') }}"></script>
-<script src="{{ url_for('static', filename='js/multiSheetFetch.js') }}"></script>
-<script src="{{ url_for('static', filename='js/multiSheetTabs.js') }}"></script-->
 
 
 
@@ -919,11 +960,26 @@
 
 <script src="{{ url_for('static', filename='js/deicticTarget.js') }}"></script>
 
-<!-- Voice + hotword -->
-<script src="{{ url_for('static', filename='js/voicechat.js') }}"></script>
-<script src="{{ url_for('static', filename='js/hotwordBootstrap.js') }}"></script>
+
+
+<!--merge-->
+<script src="{{ url_for('static', filename='js/voiceDeicticMiddleware.js') }}?v=3"></script>
+<script src="{{ url_for('static', filename='merge/voiceMergeHandler.js') }}?v=1"></script>
+
+<!--script src="{{ url_for('static', filename='merge/mergeWarningDialog.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voiceMergeHandler.js') }}"></script-->
 <script src="{{ url_for('static', filename='js/voiceActions.js') }}"></script>
-<script src="{{ url_for('static', filename='js/voiceDeicticMiddleware.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voicechat.js') }}"></script>
+
+
+<!-- Voice + hotword -->
+<script src="{{ url_for('static', filename='js/voiceglow.js') }}"></script>
+<!--script src="{{ url_for('static', filename='js/voicechat.js') }}"></script-->
+<script src="{{ url_for('static', filename='js/hotwordBootstrap.js') }}"></script>
+<!--script src="{{ url_for('static', filename='js/voiceActions.js') }}?v=3"></script-->
+<!--script src="{{ url_for('static', filename='js/voiceDeicticMiddleware.js') }}?v=3"></script-->
+
+
 
 <!-- Quick UI helpers -->
 <script src="{{ url_for('static', filename='js/quickButtons.js') }}"></script>
@@ -952,6 +1008,15 @@
 <script src="{{ url_for('static', filename='js/menu-actions.js') }}"></script>
 
 
+<!-- Merge >
+<script src="{{ url_for('static', filename='merge/mergeManager.js') }}"></script>
+<script src="{{ url_for('static', filename='merge/mergeSelection.js') }}"></script>
+<script src="{{ url_for('static', filename='merge/mergeWarningModal.js') }}"></script>
+<script src="{{ url_for('static', filename='merge/mergeUtils.js') }}"></script-->
+
+
+
+
 
 
 
@@ -962,9 +1027,16 @@
     const videoElement = document.querySelector('video'); 
 
     // video opacity when slider changes
-    opacitySlider.addEventListener('input', () => {
-        videoElement.style.opacity = opacitySlider.value;
-    });
+
+    // video opacity when slider changes
+    if (opacitySlider) {
+        opacitySlider.addEventListener('input', () => {
+            if (videoElement) videoElement.style.opacity = opacitySlider.value;
+        });
+      }
+    //opacitySlider.addEventListener('input', () => {
+      //  videoElement.style.opacity = opacitySlider.value;
+    //});
 
 
 
@@ -1030,9 +1102,17 @@
     stretchH: 'all',
     autoWrapRow: true,
     autoWrapCol: true,
+    mergeCells: true,
     fixedRowsTop: 1  // Freeze the first row (your original headers)
     
   });
+
+  hot.updateSettings({
+    selectionMode: "multiple",
+    disableVisualSelection: false,
+    fragmentSelection: true
+  });
+
 
 
   requestAnimationFrame(() => {
@@ -1261,13 +1341,35 @@
   const micBtn = document.getElementById("micBtn");
   const transcriptBox = document.getElementById("voiceTranscript");
 
-  micBtn.addEventListener("click", () => {
+  /*micBtn.addEventListener("click", () => {
     if (!isRecording) {
       startRecording();
     } else {
       stopRecording();
     }
-  });
+  });*/
+
+
+
+  function normalizeASR(text) {
+    let s = String(text || "");
+
+    // normalize punctuation/case lightly
+    s = s.replace(/[’']/g, "'");
+
+    // ---- Common "merge" mishears ----
+    // "Margie's" / "margies" / "Margie’s" / "march" -> merge
+    s = s.replace(/\bmargie'?s\b/ig, "merge");
+    s = s.replace(/\bmargies\b/ig, "merge");
+    s = s.replace(/\bmargie\b/ig, "merge");
+    s = s.replace(/\bmarch\b/ig, "merge");
+
+    // Sometimes "merge these" becomes "merge this" — that's fine.
+    // Optional: "cells" sometimes gets dropped, no issue.
+
+    return s.trim();
+  }
+
 
 
 
@@ -1299,11 +1401,29 @@
 
         recognition.onresult = function(event) {
             let transcript = event.results[event.results.length - 1][0].transcript;
+            transcript = normalizeASR(transcript);
 
             // only add final unique transcripts to chat log
             if (event.results[event.results.length - 1].isFinal && transcript !== lastTranscript) {
                 addToChatLog("user", transcript); 
                 lastTranscript = transcript;
+
+
+                // Try local parsing first (handles ASR mishears and deictic commands)
+                const localCmd = window.VDM_parse ? window.VDM_parse(transcript) : null;
+                if (localCmd && localCmd.action && localCmd.action !== 'none' && (localCmd.confidence || 0) >= 0.70) {
+                    console.log('[VoiceLocal] Handling locally:', localCmd);
+                    // Execute locally parsed command
+                    if (window.VoiceActions && window.VoiceActions.execute(localCmd)) {
+                        addToChatLog("bot", "🎯 " + localCmd.action + (localCmd.range ? ` ${localCmd.range}` : ''));
+                        return;
+                    }
+                }
+
+                // Fall back to server if local parsing didn't handle it
+
+
+
                     fetch("/api/voice-command", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
