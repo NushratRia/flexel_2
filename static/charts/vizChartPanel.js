@@ -1,4 +1,4 @@
-// static/vizChartPanel.js
+// static/charts/vizChartPanel.js
 (function (global) {
   function $(id) { return document.getElementById(id); }
 
@@ -15,6 +15,10 @@
   }
 
   function drawBarChart(canvas, labels, values) {
+    // ✅ 2-line guard (prevents "values is not iterable")
+    labels = Array.isArray(labels) ? labels : [];
+    values = Array.isArray(values) ? values : [];
+
     const ctx = canvas.getContext("2d");
     const { w, h } = ensureCanvasSize(canvas);
 
@@ -86,6 +90,14 @@
   }
 
   function showPanel(title, meta) {
+    // Auto-open Tips panel so the viz is visible
+    const tips = document.getElementById("tipsPanel");
+    if (tips && !tips.classList.contains("open")) {
+      const btn = document.getElementById("tipsBtnQB");
+      if (btn) btn.click();
+      else { tips.classList.add("open"); tips.setAttribute("aria-hidden", "false"); }
+    }
+
     const panel = $("flexeeVizPanel");
     if (!panel) return;
     $("flexeeVizTitle").textContent = title || "Chart";

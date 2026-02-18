@@ -2,7 +2,7 @@
 (function (global) {
   const RE_VIS = /\b(visuali[sz]e|chart|plot|bar\s*chart|bar\s*plot|graph)\b/i;
   const RE_BAR = /\bbar\s*chart|bar\s*plot\b/i;
-  const RE_RANGE = /\b([A-Za-z]{1,3}\d+)\s*:\s*([A-Za-z]{1,3}\d+)\b/;
+  const RE_RANGE = /\b([A-Za-z]{1,3}\d+)\s*(?::|to|through|thru|-)\s*([A-Za-z]{1,3}\d+)\b/i;
   const RE_SINGLE = /\b([A-Za-z]{1,3}\d+)\b/;
   const RE_THESE = /\b(these|this|selection|selected|here)\b/i;
 
@@ -67,6 +67,7 @@
   }
 
   function handle(transcript) {
+    console.log("[VIZ] handle got:", transcript);
     const t = normalizeTranscript(transcript);
     if (!t) return false;
     if (!RE_VIS.test(t)) return false; // only act on viz-like commands

@@ -1,6 +1,5 @@
 //2/16
 
-// 2/9/26
 (function (global) {
     const SpeechRecognition = global.SpeechRecognition || global.webkitSpeechRecognition;
 
@@ -274,6 +273,33 @@
 
             // ✅ NEW: normalized transcript used only for parsing/execution/backend
             const normalizedTranscript = normalizeTranscriptForCommands(transcript);
+
+            // 🔸 VIZ SHORT-CIRCUIT (local only)
+            try {
+            if (window.FlexeeVizVoice && window.FlexeeVizVoice.handle(normalizedTranscript)) {
+                global.VoiceGlow && global.VoiceGlow.flashSuccess();
+                this._disarm();
+                return;
+            }
+            } catch (e) {}
+
+
+
+
+
+            // 🔸 VIZ SHORT-CIRCUIT (bar chart / plot) — local only, doesn't touch backend
+            try {
+                console.log("[VIZ] trying:", normalizedTranscript);
+            if (window.FlexeeVizVoice && window.FlexeeVizVoice.handle(normalizedTranscript)) {
+                global.VoiceGlow && global.VoiceGlow.flashSuccess();
+                this._disarm();
+                return;
+            }
+            } catch (e) {}
+
+
+
+
 
             // 🔸 LOCAL SHORT-CIRCUIT for deictic both-hands (“delete this”, “write 50 here”, etc.)
             // Use normalized for better "hair/hear" handling

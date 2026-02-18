@@ -599,6 +599,67 @@
   }
   /*#tipsPanel .tip-gif:hover .caption{ opacity:1; transform:translateY(0); }*/
 
+  /* --- Flexee Viz: bottom-right, 1/3 of tips panel --- */
+  .flexee-viz {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    width: calc(33.33% - 16px);
+    height: 33%;
+    min-width: 260px;
+    min-height: 180px;
+
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 12px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+    overflow: hidden;
+    z-index: 9999;
+  }
+
+  .flexee-viz.hidden { display: none; }
+
+  .flexee-viz-header {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    font-size: 13px;
+  }
+
+  #flexeeVizClose {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 16px;
+    padding: 4px 6px;
+    opacity: 0.75;
+  }
+  #flexeeVizClose:hover { opacity: 1; }
+
+  #flexeeVizCanvas {
+    width: 100%;
+    height: calc(100% - 36px - 22px);
+    display: block;
+  }
+
+  .flexee-viz-meta {
+    height: 22px;
+    padding: 2px 10px;
+    font-size: 11px;
+    color: rgba(0,0,0,0.65);
+    border-top: 1px solid rgba(0,0,0,0.06);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  
+
+
 
 
 
@@ -931,13 +992,16 @@
 
 
 
-
-
-
-
     
-
-    
+  </div>
+  <!-- Flexee Viz Panel (bottom-right inside tips panel) -->
+  <div id="flexeeVizPanel" class="flexee-viz hidden">
+    <div class="flexee-viz-header">
+      <span id="flexeeVizTitle">Chart</span>
+      <button id="flexeeVizClose" title="Close">✕</button>
+    </div>
+    <canvas id="flexeeVizCanvas"></canvas>
+    <div id="flexeeVizMeta" class="flexee-viz-meta"></div>
   </div>
 
 </aside>
@@ -1008,11 +1072,11 @@
 <script src="{{ url_for('static', filename='js/menu-actions.js') }}"></script>
 
 
-<!-- Merge >
-<script src="{{ url_for('static', filename='merge/mergeManager.js') }}"></script>
-<script src="{{ url_for('static', filename='merge/mergeSelection.js') }}"></script>
-<script src="{{ url_for('static', filename='merge/mergeWarningModal.js') }}"></script>
-<script src="{{ url_for('static', filename='merge/mergeUtils.js') }}"></script-->
+<!-- Visualization panel -->
+<script src="{{ url_for('static', filename='charts/vizRange.js') }}"></script>
+<script src="{{ url_for('static', filename='charts/vizChartPanel.js') }}"></script>
+<script src="{{ url_for('static', filename='charts/vizVoiceHandler.js') }}"></script>
+
 
 
 
