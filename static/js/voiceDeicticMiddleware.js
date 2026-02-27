@@ -33,10 +33,11 @@
         .replace(/\b(hair|hare|hear)\b/g, ' here ')
         .replace(/\b(dis|diss|these?s)\b/g, ' this ')
         // merge family - extensive ASR mishear corrections
-        .replace(/\b(march|marsh|merch|marge|mart|merge?s?i?'?s?)\b/gi, ' merge ')
+        .replace(/\b(march|marsh|merch|marge|mart|merge?s?i?'?s?|mess|mesh|merge?d)\b/gi, ' merge ')
         .replace(/\bmarge\s*d'?s?\b/gi, ' merge ')  // "Marge D's" → "merge"
         .replace(/\bmarzi'?s?\b/gi, ' merge ')      // "marzi's" → "merge"
         .replace(/\bmart\s+(this|these|here|dis)\b/gi, ' merge $1 ')  // "Mart this" → "merge this"
+        .replace(/\bmarch\s+(this|these|here|dis)\b/gi, ' merge $1 ')  // "March this" → "merge this"
         // ultra-common: "merge this" → "mercedes"
         .replace(/\b(mercedes)\b/g, ' merge this ')
         // paste family

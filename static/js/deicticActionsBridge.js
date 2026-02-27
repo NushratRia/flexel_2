@@ -58,7 +58,13 @@
     }
 
     function resolveRanges(spec){
-        if (!spec || /^(this|here|there)$/i.test(String(spec))) return readBothHandRects();
+        console.log('[DeicticActionsBridge] resolveRanges called with spec:', spec);
+        if (!spec || /^(this|here|there)$/i.test(String(spec))) {
+            console.log('[DeicticActionsBridge] Resolving as deictic (this/here/there)');
+            const rects = readBothHandRects();
+            console.log('[DeicticActionsBridge] readBothHandRects returned:', rects);
+            return rects;
+        }
         if (Array.isArray(spec)) return spec.map(a1ToRect).filter(Boolean);
         const r = a1ToRect(spec);
         return r ? [r] : [];
@@ -88,7 +94,7 @@
         return true;
     }
 
-    function DeicticRun(cmd){
+    /*function DeicticRun(cmd){
         try{
         if (!cmd || !cmd.action) return false;
         const rects = resolveRanges(cmd.range);
@@ -96,6 +102,153 @@
 
         if (cmd.action === 'delete') return clearRects(rects);
         if (cmd.action === 'write')  return writeRects(rects, (cmd.value ?? '').toString());
+        return false;
+        }catch(e){
+        console.warn('[DeicticActionsBridge] Error', cmd, e);
+        return false;
+        }
+    }*/
+
+
+
+        function mergeRects(rects){
+        console.log('[DeicticActionsBridge] mergeRects called with:', rects);
+        const hot = HOT(); 
+        if (!hot || !rects.length) {
+            console.warn('[DeicticActionsBridge] mergeRects: no hot or empty rects');
+            return false;
+        }
+        
+        const plugin = hot.getPlugin && hot.getPlugin('mergeCells');
+        if (!plugin) {
+            console.warn('[DeicticActionsBridge] mergeRects: no mergeCells plugin found');
+            return false;
+        }
+        
+        // Combine all rectangles into a single bounding rectangle
+        let minR1 = rects[0].r1, maxR2 = rects[0].r2;
+        let minC1 = rects[0].c1, maxC2 = rects[0].c2;
+        
+        for (let i = 1; i < rects.length; i++) {
+            minR1 = Math.min(minR1, rects[i].r1);
+            maxR2 = Math.max(maxR2, rects[i].r2);
+            minC1 = Math.min(minC1, rects[i].c1);
+            maxC2 = Math.max(maxC2, rects[i].c2);
+        }
+        
+        const r1 = Math.min(minR1, maxR2);
+        const r2 = Math.max(minR1, maxR2);
+        const c1 = Math.min(minC1, maxC2);
+        const c2 = Math.max(minC1, maxC2);
+        
+        console.log(`[DeicticActionsBridge] Merge range: r1=${r1}, c1=${c1}, r2=${r2}, c2=${c2}`);
+        
+        // Validate multi-cell
+        if (r1 === r2 && c1 === c2) {
+            console.warn('[DeicticActionsBridge] Cannot merge a single cell');
+            return false;
+        }
+        
+        try {
+            // If a specialized VoiceMergeHandler is available, prefer it (it contains
+            // defensive unmerge logic and deictic resolution).
+            if (global.VoiceMergeHandler && typeof global.VoiceMergeHandler.execute === 'function') {
+                console.log('[DeicticActionsBridge] Delegating merge to VoiceMergeHandler.execute with temporary deictic rect and explicit selection');
+                const oldLive = global.__handLiveRects;
+                try {
+                    // Temporarily set the live hand rects so VoiceMergeHandler resolves our intended range
+                    global.__handLiveRects = { L: { r1: r1, c1: c1, r2: r2, c2: c2 } };
+                    // Also ensure HOT selection matches, so handlers that prefer selection will work
+                    try { hot.selectCell(r1, c1, r2, c2, true); } catch(e) { /* ignore */ }
+                    return !!global.VoiceMergeHandler.execute({ action: 'merge' });
+                } catch(e){
+                    console.warn('[DeicticActionsBridge] VoiceMergeHandler failed:', e);
+                } finally {
+                    // restore previous live rects
+                    global.__handLiveRects = oldLive;
+                }
+            }
+
+            // Select the range
+            hot.selectCell(r1, c1, r2, c2, true);
+
+            // Enable plugin if needed
+            if (plugin.enablePlugin) {
+                try { plugin.enablePlugin(); } catch (_) {}
+            }
+
+            // Defensive: unmerge any existing merged cells that intersect our target
+            try {
+                const coll = plugin.mergedCellsCollection && plugin.mergedCellsCollection.mergedCells;
+                if (Array.isArray(coll) && coll.length) {
+                    const intersects = (m) => {
+                        const mr1 = m.row;
+                        const mc1 = m.col;
+                        const mr2 = m.row + (m.rowspan||1) - 1;
+                        const mc2 = m.col + (m.colspan||1) - 1;
+                        return !(mr2 < r1 || mr1 > r2 || mc2 < c1 || mc1 > c2);
+                    };
+                    coll.slice().forEach(m => {
+                        try {
+                            if (intersects(m) && typeof plugin.unmerge === 'function') {
+                                console.log('[DeicticActionsBridge] Unmerging overlapping merged cell at', m.row, m.col);
+                                plugin.unmerge(m.row, m.col);
+                            }
+                        } catch(e){ /* ignore */ }
+                    });
+                }
+            } catch(e) { console.warn('[DeicticActionsBridge] defensive unmerge check failed:', e); }
+
+            // Try merge with parameters (better API)
+            if (typeof plugin.merge === 'function') {
+                console.log('[DeicticActionsBridge] Calling plugin.merge(r1, c1, r2, c2)');
+                plugin.merge(r1, c1, r2, c2);
+            } else if (typeof plugin.mergeSelection === 'function') {
+                console.log('[DeicticActionsBridge] Calling plugin.mergeSelection()');
+                plugin.mergeSelection();
+            } else {
+                console.warn('[DeicticActionsBridge] No merge API found on plugin');
+                return false;
+            }
+
+            hot.render();
+            console.log('[DeicticActionsBridge] mergeRects completed successfully');
+            return true;
+        } catch(e) {
+            console.warn('[DeicticActionsBridge] Merge failed:', e);
+            return false;
+        }
+    }
+
+    function DeicticRun(cmd){
+        console.log('[DeicticActionsBridge] DeicticRun called with cmd:', cmd);
+        try{
+        if (!cmd || !cmd.action) {
+            console.warn('[DeicticActionsBridge] DeicticRun: no cmd or action');
+            return false;
+        }
+        
+        const rects = resolveRanges(cmd.range);
+        console.log('[DeicticActionsBridge] resolveRanges returned:', rects);
+        
+        if (!rects.length) {
+            console.warn('[DeicticActionsBridge] DeicticRun: no rects resolved');
+            return false;
+        }
+
+        if (cmd.action === 'delete') {
+            console.log('[DeicticActionsBridge] Executing DELETE action');
+            return clearRects(rects);
+        }
+        if (cmd.action === 'write') {
+            console.log('[DeicticActionsBridge] Executing WRITE action');
+            return writeRects(rects, (cmd.value ?? '').toString());
+        }
+        if (cmd.action === 'merge' || cmd.action === 'merge_cells') {
+            console.log('[DeicticActionsBridge] Executing MERGE action');
+            return mergeRects(rects);
+        }
+        console.warn('[DeicticActionsBridge] DeicticRun: unknown action', cmd.action);
         return false;
         }catch(e){
         console.warn('[DeicticActionsBridge] Error', cmd, e);

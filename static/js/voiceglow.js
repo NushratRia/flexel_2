@@ -14,25 +14,23 @@
         0% {
           box-shadow:
             0 2px 10px rgba(0, 0, 0, 0.22),
-            inset 0 0 0 0 rgba(0, 200, 100, 0),
-            inset 0 0 0 rgba(0, 200, 100, 0);
+            0 0 0 rgba(0, 200, 100, 0);
           border-color: #cfcfcf;
           filter: brightness(1);
         }
         50% {
           box-shadow:
             0 2px 10px rgba(0, 0, 0, 0.22),
-            inset 0 0 0 3px rgba(0, 200, 100, 0.95),
-            inset 0 0 22px rgba(0, 200, 100, 0.55),
-            inset 0 0 44px rgba(0, 200, 100, 0.35);
+            0 0 10px rgba(0, 200, 100, 0.55),
+            0 0 26px rgba(0, 200, 100, 0.65),
+            0 0 48px rgba(0, 200, 100, 0.45);
           border-color: rgba(0, 200, 100, 0.95);
           filter: brightness(1.08);
         }
         100% {
           box-shadow:
             0 2px 10px rgba(0, 0, 0, 0.22),
-            inset 0 0 0 0 rgba(0, 200, 100, 0),
-            inset 0 0 0 rgba(0, 200, 100, 0);
+            0 0 0 rgba(0, 200, 100, 0);
           border-color: #cfcfcf;
           filter: brightness(1);
         }
@@ -42,25 +40,23 @@
         0% {
           box-shadow:
             0 2px 10px rgba(0, 0, 0, 0.22),
-            inset 0 0 0 0 rgba(255, 70, 70, 0),
-            inset 0 0 0 rgba(255, 70, 70, 0);
+            0 0 0 rgba(255, 70, 70, 0);
           border-color: #cfcfcf;
           filter: brightness(1);
         }
         50% {
           box-shadow:
             0 2px 10px rgba(0, 0, 0, 0.22),
-            inset 0 0 0 3px rgba(255, 70, 70, 0.95),
-            inset 0 0 22px rgba(255, 70, 70, 0.55),
-            inset 0 0 44px rgba(255, 70, 70, 0.35);
+            0 0 10px rgba(255, 70, 70, 0.55),
+            0 0 26px rgba(255, 70, 70, 0.65),
+            0 0 48px rgba(255, 70, 70, 0.45);
           border-color: rgba(255, 70, 70, 0.95);
           filter: brightness(1.08);
         }
         100% {
           box-shadow:
             0 2px 10px rgba(0, 0, 0, 0.22),
-            inset 0 0 0 0 rgba(255, 70, 70, 0),
-            inset 0 0 0 rgba(255, 70, 70, 0);
+            0 0 0 rgba(255, 70, 70, 0);
           border-color: #cfcfcf;
           filter: brightness(1);
         }

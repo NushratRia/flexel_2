@@ -3,8 +3,8 @@
 (function (global) {
     const SpeechRecognition = global.SpeechRecognition || global.webkitSpeechRecognition;
 
-    // Accepts "flexee", "hey flexee", "ok flexee", and tiny misspeaks like "flexi"
-    const HOTWORD_REGEX = /\b(?:hey\s+|ok\s+)?flexe?i?e?\b/i;
+    // Accepts "flexee", "hey flexee", "ok flexee", and similar mishears: "lexi", "sexy", "flexi", etc.
+    const HOTWORD_REGEX = /\b(?:hey\s+|ok\s+)?(?:flexe?i?e?|lexi|sexy)\b/i;
 
     // Deictic tokens (incl. common ASR confusions)
     const DEIXIS = /\b(this|here|there|selection|hair|hear)\b/i;
@@ -195,7 +195,7 @@
             global.VoiceGlow && global.VoiceGlow.flashError(); // ✅ NEW
             addToChatLog && addToChatLog("bot", "⏱️ No command heard — say “Flexee” again.");
             this._disarm();
-        }, 5000);
+        }, 10000);
         },
 
         _disarm() {
@@ -208,7 +208,7 @@
 
         _showListeningCue() {
         if (this._listeningCueShown) return;
-        addToChatLog && addToChatLog("bot", "🎤 Listening… (5s)");
+        addToChatLog && addToChatLog("bot", "🎤 Listening… (10s)");
         this._listeningCueShown = true;
 
         // ✅ NEW: start glow
@@ -411,6 +411,14 @@
                 cmd.action = "merge_cells";
             }
 
+            // Try deictic actions first (merge this, delete this, etc.)
+            console.log('[voicechat] cmd before deictic:', cmd);
+            if (global.DeicticRun && global.DeicticRun(cmd)) {
+                console.log('[voicechat] DeicticRun handled the command');
+                global.VoiceGlow && global.VoiceGlow.flashSuccess();
+                return;
+            }
+
             if (global.VoiceActions && global.VoiceActions.execute(cmd)) {
                 global.VoiceGlow && global.VoiceGlow.flashSuccess(); // ✅ NEW
                 return;
@@ -431,7 +439,7 @@
 
             // Reset inactivity timer so it doesn’t cut off while the request is in flight
             clearTimeout(this.commandSilenceTimer);
-            this.commandSilenceTimer = setTimeout(() => this._disarm(), 5000);
+            this.commandSilenceTimer = setTimeout(() => this._disarm(), 10000);
         }
         },
     };
