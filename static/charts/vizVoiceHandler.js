@@ -11,7 +11,7 @@
   }
 
   function runVisualizationFromSelection(hot, titleHint) {
-    const rect = global.FlexeeVizRange.getSelectedRangeRect(hot);
+    let rect = global.FlexeeVizRange.getSelectedRangeRect(hot);
     if (!rect) {
       global.FlexeeVizPanel.bar({
         title: "Chart",
@@ -20,6 +20,15 @@
         values: [0]
       });
       return true;
+    }
+
+    // if user only selected the first cell of a column, assume they mean the
+    // whole column; expand selection to cover every row in that column.
+    if (rect.r1 === rect.r2 && rect.c1 === rect.c2 && rect.r1 === 0) {
+      const totalRows = (hot.countRows && hot.countRows()) || 0;
+      if (totalRows > 1) {
+        rect = { r1: 0, r2: totalRows - 1, c1: rect.c1, c2: rect.c1 };
+      }
     }
 
     const { labels, values, error } = global.FlexeeVizRange.extractSeriesFromRect(hot, rect);
