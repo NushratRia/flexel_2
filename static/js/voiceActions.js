@@ -242,13 +242,18 @@
       const r = this._rectFromA1(a1);
       if (!r) return false;
 
+      // accumulate changes so undo sees one action
+      const changes = [];
       if ("r2" in r) {
         for (let i = r.r1; i <= r.r2; i++) {
-          for (let j = r.c1; j <= r.c2; j++) this._hot.setDataAtCell(i, j, "");
+          for (let j = r.c1; j <= r.c2; j++) {
+            changes.push([i, j, ""]);
+          }
         }
       } else {
-        this._hot.setDataAtCell(r.r, r.c, "");
+        changes.push([r.r, r.c, ""]);
       }
+      if (changes.length) this._hot.setDataAtCell(changes);
       return true;
     },
 
@@ -257,11 +262,16 @@
       let rects = this._resolveToRects(rangeSpec);
       if (!rects.length) return false;
 
+      // build single change list
+      const changes = [];
       rects.forEach(r=>{
         for (let i = r.r1; i <= r.r2; i++) {
-          for (let j = r.c1; j <= r.c2; j++) this._hot.setDataAtCell(i, j, "");
+          for (let j = r.c1; j <= r.c2; j++) {
+            changes.push([i, j, ""]);
+          }
         }
       });
+      if (changes.length) this._hot.setDataAtCell(changes);
 
       const last = rects[rects.length - 1];
       this._hot.selectCell(last.r1, last.c1, last.r2, last.c2, true);

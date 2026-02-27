@@ -72,11 +72,18 @@
 
     function clearRects(rects){
         const hot = HOT(); if (!hot || !rects.length) return false;
+        // Collect all cell clears so undo records one action
+        const changes = [];
         rects.forEach(rect=>{
-        const rows = rect.r2 - rect.r1 + 1, cols = rect.c2 - rect.c1 + 1;
-        const payload = Array.from({length: rows}, () => Array.from({length: cols}, () => ''));
-        hot.populateFromArray(rect.r1, rect.c1, payload, rect.r2, rect.c2, 'overwrite');
+        for (let i = rect.r1; i <= rect.r2; i++) {
+            for (let j = rect.c1; j <= rect.c2; j++) {
+            changes.push([i, j, '']);
+            }
+        }
         });
+        if (changes.length) {
+        hot.setDataAtCell(changes);
+        }
         const last = rects[rects.length-1];
         hot.selectCell(last.r1, last.c1, last.r2, last.c2, true);
         return true;
