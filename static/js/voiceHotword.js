@@ -54,7 +54,7 @@
         try {
             this._rec.start();
             this._startedOnce = true;
-            this._logUI("bot", "👂 Hotword listening… (say “Flexee…”)");
+            //this._logUI("bot", "👂 Hotword listening… (say “Flexee…”)");
         } catch (e) {
             // Safari/Chrome may throw if already started; safe to ignore
         }
@@ -194,6 +194,14 @@
 
             // First let your VoiceActions handle extended commands
             if (global.VoiceActions && global.VoiceActions.execute(cmd)) return;
+
+            // Try deictic actions (merge this, delete this, etc.)
+            console.log('[voiceHotword] Attempting DeicticRun with cmd:', cmd);
+            if (global.DeicticRun && global.DeicticRun(cmd)) {
+                console.log('[voiceHotword] DeicticRun executed successfully');
+                return;
+            }
+            console.log('[voiceHotword] DeicticRun did not handle the command');
 
             // Fallback to the helpers defined in view.html (sum/avg/write/sort)
             if (cmd.action === "sum" && (cmd.range || cmd.target)) {

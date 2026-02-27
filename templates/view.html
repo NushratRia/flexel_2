@@ -47,6 +47,19 @@
       background: #f8f9fa;
     }
 
+    /* Allow Handsontable to receive mouse events */
+    #deicticHud,
+    #gestureHud,
+    #gestureOverlay,
+    #overlay,
+    #handOverlay,
+    #handCanvas,
+    #gestureCanvas,
+    canvas {
+      pointer-events: none !important;
+    }
+
+
     #hot {
       flex: 1;
       overflow: hidden;
@@ -279,6 +292,49 @@
     color: #333;
   }
 
+  /* Voice listening glow (5s) */
+  /* Stronger amber glow (more visible) */
+  @keyframes voiceGlowPulseAmberStrong {
+    0% {
+      box-shadow:
+        0 2px 10px rgba(0, 0, 0, 0.22),
+        0 0 0 rgba(255, 170, 0, 0);
+      border-color: #cfcfcf;
+      filter: brightness(1);
+    }
+    50% {
+      box-shadow:
+        0 2px 10px rgba(0, 0, 0, 0.22),
+        0 0 10px rgba(255, 170, 0, 0.55),
+        0 0 26px rgba(255, 170, 0, 0.65),
+        0 0 48px rgba(255, 170, 0, 0.45);
+      border-color: rgba(255, 170, 0, 0.95);
+      filter: brightness(1.06);
+    }
+    100% {
+      box-shadow:
+        0 2px 10px rgba(0, 0, 0, 0.22),
+        0 0 0 rgba(255, 170, 0, 0);
+      border-color: #cfcfcf;
+      filter: brightness(1);
+    }
+  }
+
+  #voiceChatbox.listening-glow {
+    border-width: 2px; 
+    animation: voiceGlowPulseAmberStrong 2.4s ease-in-out infinite; 
+  } */
+
+
+
+
+
+
+
+
+
+
+
   #micBtn {
     background: #007bff;
     color: white;
@@ -358,12 +414,58 @@
 
   .htCore td.gesture-highlight,
   .htCore th.gesture-highlight {
-      background-color: rgba(0, 255, 0, 0.4) !important;
-      outline: 2px solid limegreen !important;
+      background-color: rgba(89, 119, 89, 0.4) !important;
+      /*outline: 2px solid limegreen !important; */
+      outline: 2px solid rgba(160, 210, 255, 0.8) !important;
+      box-shadow: 0 0 6px rgba(160, 210, 255, 0.6);
       transition: background-color 0.1s ease;
   }
 
+
+  
+  /* glow */
+  .htCore td.gesture-selected {
+    background-color: rgba(120,200,255,0.35) !important;
+    box-shadow: 0 0 18px rgba(120,200,255,0.85);
+  }
+  
+  /* Persistent blue selection rectangle (secondary hand) */
+  .htCore td.gesture-pinned {
+    position: relative;
+  }
+
+  .htCore td.gesture-pinned::after {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    border: 2px solid #4a8cff;   /* Google-Sheets-like blue */
+    border-radius: 2px;
+    pointer-events: none;
+  }
+
+
+
+  /* Pinch-selected cell: temporary glow */
+  .htCore td.gesture-selected,
+  .htCore th.gesture-selected {
+    background-color: rgba(120, 200, 255, 0.35) !important;
+
+    outline: 3px solid rgba(140, 210, 255, 0.95) !important;
+
+    box-shadow:
+      0 0 10px rgba(140, 210, 255, 0.9),
+      0 0 20px rgba(140, 210, 255, 0.6),
+      inset 0 0 6px rgba(255,255,255,0.35);
+
+    transition:
+      box-shadow 0.25s ease,
+      outline 0.25s ease,
+      background-color 0.25s ease;
+  }
+
+
   /* Selected cell via pinch gesture 
+
   .htCore td.gesture-selected {
       background-color: #555 !important;
       color: white !important;
@@ -415,7 +517,7 @@
   #tipsPanel h2,
   #tipsPanel h3,
   #tipsPanel h4 {
-    color: #F58800;
+    color: #002b66;
   }
 
   /* Collapsible UI */
@@ -496,6 +598,67 @@
     transform: translateY(0); 
   }
   /*#tipsPanel .tip-gif:hover .caption{ opacity:1; transform:translateY(0); }*/
+
+  /* --- Flexee Viz: bottom-right, 1/3 of tips panel --- */
+  .flexee-viz {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    width: calc(100% - 24px);
+    height: 33%;
+    min-width: 260px;
+    min-height: 180px;
+
+    background: #ffffff;
+    border: 1px solid rgba(0,0,0,0.12);
+    border-radius: 12px;
+    box-shadow: 0 10px 28px rgba(0,0,0,0.12);
+    overflow: hidden;
+    z-index: 9999;
+  }
+
+  .flexee-viz.hidden { display: none; }
+
+  .flexee-viz-header {
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 10px;
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+    font-size: 13px;
+  }
+
+  #flexeeVizClose {
+    border: 0;
+    background: transparent;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 16px;
+    padding: 4px 6px;
+    opacity: 0.75;
+  }
+  #flexeeVizClose:hover { opacity: 1; }
+
+  #flexeeVizCanvas {
+    width: 100%;
+    height: calc(100% - 36px - 22px);
+    display: block;
+  }
+
+  .flexee-viz-meta {
+    height: 22px;
+    padding: 2px 10px;
+    font-size: 11px;
+    color: rgba(0,0,0,0.65);
+    border-top: 1px solid rgba(0,0,0,0.06);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  
+
 
 
 
@@ -611,10 +774,10 @@
             <div style="display: flex; align-items: center; gap: 6px;">
             <label for="modeSelector" style="font-size: 12px;">Mode:</label>
             <select id="modeSelector" title="Select Mode" style="font-size: 12px; padding: 2px 4px;">
-                <option value="combination">Combination</option>
+                <option value="combination">Flexee</option>
                 <option value="wimp">WIMP</option>
-                <option value="gesture">Gesture</option>
-                <option value="voice">Voice</option>
+                <!--option value="gesture">Gesture</option>
+                <option value="voice">Voice</option-->
                 
             </select>
             </div>
@@ -664,9 +827,10 @@
       <li>And say your command (e.g., “sort column A”).</li>
       <li>The system will execute the task hands-free.</li>
     </ul>
+    <h4>Example Voice Commands:</h4>
     <!-- 📋 Example Commands -->
-  <div style="margin: 8px 0; font-size: 13px;">
-    <h4>Example Commands:</h4>
+  <div style="max-height: 200px; overflow-y: auto; padding-right: 8px; margin: 8px 0; font-size: 13px; -webkit-overflow-scrolling: touch; overscroll-behavior: contain; border: 1px solid rgba(0,0,0,.08); border-radius: 8px;">
+  <!--div style="margin: 8px 0; font-size: 13px;"-->
     <strong>📌 Selecting</strong>
     <ul>
       <li>“Select A1”</li>
@@ -716,10 +880,10 @@
     <ul>
       <li>“Zoom in”</li>
       <li>“Zoom out”</li>
-      <li>“Reset zoom”</li>
+      <!--li>“Reset zoom”</li-->
     </ul>
 
-    <strong>📊 Data ops</strong>
+    <strong>📈 Data ops</strong>
     <ul>
       <li>“Sort column A ascending”</li>
       <li>“Sort column B descending”</li>
@@ -727,6 +891,19 @@
       <li>“Average D4 to D20”</li>
       <!--li>“Remove duplicates in this range”</li-->
       <!--li>“Fill missing with N/A”</li-->
+    </ul>
+
+    <strong>🔀 Merge</strong>
+    <ul>
+      <li>“Merge F2 and F3”</li>
+      <li>“Merge A5 to G5”</li>
+    </ul>
+
+    <strong>📊 Visualization</strong>
+    <ul>
+      <li>“Visualize F2 to F10”</li>
+      <li>“Visualize these” (while pointing with hand)</li>
+      
     </ul>
 
     <strong>⚡ Extended</strong>
@@ -743,14 +920,12 @@
     <p>Perform tasks with hand gestures:</p>
     <ul>
       <li><strong>Selecting</strong>: Pinch fingers together on the target cell.</li>
-      <li><strong>Scrolling</strong>: Swipe up/down.</li>
-      <!--li><strong>Undo</strong>: Long swipe left with an open palm.</li>
-      <li><strong>Redo</strong>: Long swipe right with an open palm.</li-->
+      <!--li><strong>Scrolling</strong>: Swipe up/down.</li>
       <li><strong>Delete</strong>: Select then flick downward.</li>
       <li><strong>Merge</strong>: Select with two hands and collide them.</li>
       <li><strong>Zoom In/Out</strong>: Standard pinch-to-zoom gesture using all fingers.</li>
       <li><strong>Copy</strong>: Pinch to select data, then close the other fist.</li>
-      <li><strong>Paste</strong>: Open fist.</li>
+      <li><strong>Paste</strong>: Open fist.</li-->
     </ul>
     <!--img src="/static/img/tool_tip.png" alt="Tool tips" style="width:100%; max-width:100%; height:auto; display:block; margin:0 auto;"-->
     <div class="tips-gif-grid">
@@ -763,13 +938,13 @@
       <figcaption class="caption">Pinch to Select</figcaption>
     </figure>
 
-    <figure class="tip-gif">
+    <!--figure class="tip-gif">
       <img class="gif-hover" loading="lazy"
           data-still="/static/img/gifs/open.png"
           
           data-mov="/static/gifs/scroll.mp4"
           alt="Scroll">
-      <figcaption class="caption">Scroll to Swipe</figcaption>
+      <figcaption class="caption">Swipe to Scroll</figcaption>
     </figure>
 
     <figure class="tip-gif">
@@ -815,7 +990,7 @@
           data-mov="/static/gifs/paste.mp4"
           alt="Paste">
       <figcaption class="caption">Pinch & open fist to Paste</figcaption>
-    </figure>
+    </figure-->
   </div>
 
     
@@ -827,6 +1002,19 @@
       <li>Point to data with a gesture and say a voice command like “sort this.”</li>
       <li>Switch between WIMP, Voice, and Gesture seamlessly in the same workflow.</li>
     </ul>
+
+
+
+    
+  </div>
+  <!-- Flexee Viz Panel (bottom-right inside tips panel) -->
+  <div id="flexeeVizPanel" class="flexee-viz hidden">
+    <div class="flexee-viz-header">
+      <span id="flexeeVizTitle">Chart</span>
+      <button id="flexeeVizClose" title="Close">✕</button>
+    </div>
+    <canvas id="flexeeVizCanvas"></canvas>
+    <div id="flexeeVizMeta" class="flexee-viz-meta"></div>
   </div>
 
 </aside>
@@ -837,31 +1025,6 @@
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.min.js"></script>
-<!--script src="{{ url_for('static', filename='js/gestureHighlight_debug.js') }}"></script>
-<script src="{{ url_for('static', filename='js/gestureUtils.js') }}"></script>
-<script src="{{ url_for('static', filename='js/gestureActions.js') }}"></script>
-<script src="{{ url_for('static', filename='js/gestureArbiter500.js') }}"></script>
-<script src="{{ url_for('static', filename='js/voiceActions.js') }}"></script>
-<script src="{{ url_for('static', filename='js/voicechat.js') }}"></script>
-<script src="{{ url_for('static', filename='js/hotwordBootstrap.js') }}"></script>
-<script src="{{ url_for('static', filename='js/quickButtons.js') }}"></script>
-<script src="{{ url_for('static', filename='js/tipsCollapsible.js') }}"></script>
-
-<script src="{{ url_for('static', filename='js/deicticTargetBothHands.js') }}"></script>
-<script src="{{ url_for('static', filename='js/bimanualPinchSelect.js') }}"></script>
-<script src="{{ url_for('static', filename='js/deicticPatches.js') }}"></script>
-<script src="{{ url_for('static', filename='js/voiceDeicticMiddleware.js') }}"></script>
-<script src="{{ url_for('static', filename='js/deicticHud.js') }}"></script>
-<script src="{{ url_for('static', filename='js/deicticActionsBridge.js') }}"></script>
-
-<script src="{{ url_for('static', filename='js/gestureScrollDelta.js') }}"></script>
-
-<script src="{{ url_for('static', filename='js/gestureDeleteFlick.js') }}"></script>
-<script src="{{ url_for('static', filename='js/gestureDeleteBinHud.js') }}"></script>
-
-<script src="{{ url_for('static', filename='js/gestureZoomThumbMiddle.js') }}"></script>
-<script src="{{ url_for('static', filename='js/multiSheetFetch.js') }}"></script>
-<script src="{{ url_for('static', filename='js/multiSheetTabs.js') }}"></script-->
 
 
 
@@ -874,28 +1037,44 @@
 
 <script src="{{ url_for('static', filename='js/deicticTarget.js') }}"></script>
 
-<!-- Voice + hotword -->
-<script src="{{ url_for('static', filename='js/voicechat.js') }}"></script>
-<script src="{{ url_for('static', filename='js/hotwordBootstrap.js') }}"></script>
+
+
+<!--merge-->
+<script src="{{ url_for('static', filename='js/voiceDeicticMiddleware.js') }}?v=3"></script>
+<script src="{{ url_for('static', filename='merge/voiceMergeHandler.js') }}?v=1"></script>
+
+<!--script src="{{ url_for('static', filename='merge/mergeWarningDialog.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voiceMergeHandler.js') }}"></script-->
 <script src="{{ url_for('static', filename='js/voiceActions.js') }}"></script>
-<script src="{{ url_for('static', filename='js/voiceDeicticMiddleware.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voicechat.js') }}"></script>
+<script src="{{ url_for('static', filename='js/voiceHotword.js') }}?v=2"></script>
+
+
+<!-- Voice + hotword -->
+<script src="{{ url_for('static', filename='js/voiceglow.js') }}"></script>
+<!--script src="{{ url_for('static', filename='js/voicechat.js') }}"></script-->
+<script src="{{ url_for('static', filename='js/hotwordBootstrap.js') }}"></script>
+<!--script src="{{ url_for('static', filename='js/voiceActions.js') }}?v=3"></script-->
+<!--script src="{{ url_for('static', filename='js/voiceDeicticMiddleware.js') }}?v=3"></script-->
+
+
 
 <!-- Quick UI helpers -->
 <script src="{{ url_for('static', filename='js/quickButtons.js') }}"></script>
 <script src="{{ url_for('static', filename='js/tipsCollapsible.js') }}"></script>
 
 <!-- Deictic + multimodal selection -->
-<script src="{{ url_for('static', filename='js/deicticTargetBothHands.js') }}"></script>
-<script src="{{ url_for('static', filename='js/bimanualPinchSelect.js') }}"></script>
-<script src="{{ url_for('static', filename='js/deicticPatches.js') }}"></script>
-<script src="{{ url_for('static', filename='js/deicticHud.js') }}"></script>
-<script src="{{ url_for('static', filename='js/deicticActionsBridge.js') }}"></script>
+<script src="{{ url_for('static', filename='js/deicticTargetBothHands.js') }}?v=2"></script>
+<script src="{{ url_for('static', filename='js/bimanualPinchSelect.js') }}?v=2"></script>
+<script src="{{ url_for('static', filename='js/deicticPatches.js') }}?v=2"></script>
+<script src="{{ url_for('static', filename='js/deicticHud.js') }}?v=2"></script>
+<script src="{{ url_for('static', filename='js/deicticActionsBridge.js') }}?v=2"></script>
 
 <!-- Extended gestures -->
-<script src="{{ url_for('static', filename='js/gestureScrollDelta.js') }}"></script>
+<!--script src="{{ url_for('static', filename='js/gestureScrollDelta.js') }}"></script>
 <script src="{{ url_for('static', filename='js/gestureDeleteFlick.js') }}"></script>
 <script src="{{ url_for('static', filename='js/gestureDeleteBinHud.js') }}"></script>
-<script src="{{ url_for('static', filename='js/gestureZoomThumbMiddle.js') }}"></script>
+<script src="{{ url_for('static', filename='js/gestureZoomThumbMiddle.js') }}"></script-->
 
 <!-- Multi-sheet -->
 <script src="{{ url_for('static', filename='js/multiSheetFetch.js') }}"></script>
@@ -905,6 +1084,15 @@
 <script src="{{ url_for('static', filename='js/tipsVideoHover.js') }}"></script>
 <script src="{{ url_for('static', filename='js/quickButtonsCapsules.js') }}"></script>
 <script src="{{ url_for('static', filename='js/menu-actions.js') }}"></script>
+
+
+<!-- Visualization panel -->
+<script src="{{ url_for('static', filename='charts/vizRange.js') }}"></script>
+<script src="{{ url_for('static', filename='charts/vizChartPanel.js') }}"></script>
+<script src="{{ url_for('static', filename='charts/vizVoiceHandler.js') }}"></script>
+
+
+
 
 
 
@@ -917,9 +1105,16 @@
     const videoElement = document.querySelector('video'); 
 
     // video opacity when slider changes
-    opacitySlider.addEventListener('input', () => {
-        videoElement.style.opacity = opacitySlider.value;
-    });
+
+    // video opacity when slider changes
+    if (opacitySlider) {
+        opacitySlider.addEventListener('input', () => {
+            if (videoElement) videoElement.style.opacity = opacitySlider.value;
+        });
+      }
+    //opacitySlider.addEventListener('input', () => {
+      //  videoElement.style.opacity = opacitySlider.value;
+    //});
 
 
 
@@ -985,9 +1180,17 @@
     stretchH: 'all',
     autoWrapRow: true,
     autoWrapCol: true,
+    mergeCells: true,
     fixedRowsTop: 1  // Freeze the first row (your original headers)
     
   });
+
+  hot.updateSettings({
+    selectionMode: "multiple",
+    disableVisualSelection: false,
+    fragmentSelection: true
+  });
+
 
 
   requestAnimationFrame(() => {
@@ -1216,13 +1419,35 @@
   const micBtn = document.getElementById("micBtn");
   const transcriptBox = document.getElementById("voiceTranscript");
 
-  micBtn.addEventListener("click", () => {
+  /*micBtn.addEventListener("click", () => {
     if (!isRecording) {
       startRecording();
     } else {
       stopRecording();
     }
-  });
+  });*/
+
+
+
+  function normalizeASR(text) {
+    let s = String(text || "");
+
+    // normalize punctuation/case lightly
+    s = s.replace(/[’']/g, "'");
+
+    // ---- Common "merge" mishears ----
+    // "Margie's" / "margies" / "Margie’s" / "march" -> merge
+    s = s.replace(/\bmargie'?s\b/ig, "merge");
+    s = s.replace(/\bmargies\b/ig, "merge");
+    s = s.replace(/\bmargie\b/ig, "merge");
+    s = s.replace(/\bmarch\b/ig, "merge");
+
+    // Sometimes "merge these" becomes "merge this" — that's fine.
+    // Optional: "cells" sometimes gets dropped, no issue.
+
+    return s.trim();
+  }
+
 
 
 
@@ -1254,11 +1479,29 @@
 
         recognition.onresult = function(event) {
             let transcript = event.results[event.results.length - 1][0].transcript;
+            transcript = normalizeASR(transcript);
 
             // only add final unique transcripts to chat log
             if (event.results[event.results.length - 1].isFinal && transcript !== lastTranscript) {
                 addToChatLog("user", transcript); 
                 lastTranscript = transcript;
+
+
+                // Try local parsing first (handles ASR mishears and deictic commands)
+                const localCmd = window.VDM_parse ? window.VDM_parse(transcript) : null;
+                if (localCmd && localCmd.action && localCmd.action !== 'none' && (localCmd.confidence || 0) >= 0.70) {
+                    console.log('[VoiceLocal] Handling locally:', localCmd);
+                    // Execute locally parsed command
+                    if (window.VoiceActions && window.VoiceActions.execute(localCmd)) {
+                        addToChatLog("bot", "🎯 " + localCmd.action + (localCmd.range ? ` ${localCmd.range}` : ''));
+                        return;
+                    }
+                }
+
+                // Fall back to server if local parsing didn't handle it
+
+
+
                     fetch("/api/voice-command", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
@@ -1769,6 +2012,27 @@ function executeSortColumn(colLetter, direction) {
       }
     }
   });
+
+
+
+
+
+
+  function glowSelectedCell(row, col, duration = 3000) {
+    const hot = window.hot || (window.GestureActions && GestureActions._hot);
+    if (!hot) return;
+
+    const td = hot.getCell(row, col);
+    if (!td) return;
+
+    td.classList.add('gesture-selected');
+
+    setTimeout(() => {
+      td.classList.remove('gesture-selected');
+    }, duration);
+  }
+
+
 })();
 
 

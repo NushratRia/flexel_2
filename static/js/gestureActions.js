@@ -15,6 +15,7 @@
         _pasteArmed: false, 
         _successCue: null,
         _cueTimeout: 0,
+        
 
         // toast cue
         _toastHost: null,
