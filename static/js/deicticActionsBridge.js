@@ -42,6 +42,27 @@
         const hotRect = readHotRect();
         if (hotRect) out.push(hotRect);
         }
+        // If still empty, pinch-to-select or mouse selection might exist but not in rects yet
+        // Try to ensure at least the current HOT selection is captured
+        if (!out.length) {
+            const hot = HOT();
+            if (hot) {
+                // Check if there's any active selection in HOT
+                if (typeof hot.getSelectedLast === 'function') {
+                    try {
+                        const sel = hot.getSelectedLast();
+                        if (sel && Array.isArray(sel) && sel.length >= 4) {
+                            out.push({
+                                r1: Math.min(sel[0], sel[2]),
+                                c1: Math.min(sel[1], sel[3]),
+                                r2: Math.max(sel[0], sel[2]),
+                                c2: Math.max(sel[1], sel[3])
+                            });
+                        }
+                    } catch (e) { /* ignore */ }
+                }
+            }
+        }
         return out;
     }
 

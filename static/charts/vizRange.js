@@ -46,14 +46,32 @@
 
   function getSelectedRangeRect(hot) {
     try {
-      const sel = hot.getSelectedRangeLast && hot.getSelectedRangeLast();
-      if (!sel) return null;
-      // Handsontable returns {from:{row,col}, to:{row,col}}
-      const r1 = Math.min(sel.from.row, sel.to.row);
-      const r2 = Math.max(sel.from.row, sel.to.row);
-      const c1 = Math.min(sel.from.col, sel.to.col);
-      const c2 = Math.max(sel.from.col, sel.to.col);
-      return { r1, c1, r2, c2 };
+      // primary: new API
+      if (typeof hot.getSelectedRangeLast === 'function') {
+        const sel = hot.getSelectedRangeLast();
+        if (sel && sel.from && sel.to) {
+          const r1 = Math.min(sel.from.row, sel.to.row);
+          const r2 = Math.max(sel.from.row, sel.to.row);
+          const c1 = Math.min(sel.from.col, sel.to.col);
+          const c2 = Math.max(sel.from.col, sel.to.col);
+          return { r1, c1, r2, c2 };
+        }
+      }
+      // fallback for older/keyboard selections
+      if (typeof hot.getSelected === 'function') {
+        const arr = hot.getSelected();
+        if (Array.isArray(arr) && arr.length) {
+          const last = arr[arr.length - 1];
+          if (Array.isArray(last) && last.length >= 4) {
+            const r1 = Math.min(last[0], last[2]);
+            const c1 = Math.min(last[1], last[3]);
+            const r2 = Math.max(last[0], last[2]);
+            const c2 = Math.max(last[1], last[3]);
+            return { r1, c1, r2, c2 };
+          }
+        }
+      }
+      return null;
     } catch (e) {
       return null;
     }
