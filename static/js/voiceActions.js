@@ -120,9 +120,24 @@
     },
 
     _currentSelectionRect() {
-      const sel = this._hot.getSelectedLast && this._hot.getSelectedLast();
-      if (!sel) return null;
-      return { r1: Math.min(sel[0], sel[2]), c1: Math.min(sel[1], sel[3]), r2: Math.max(sel[0], sel[2]), c2: Math.max(sel[1], sel[3]) };
+      // Prefer newer API
+      if (this._hot.getSelectedLast) {
+        const sel = this._hot.getSelectedLast();
+        if (sel && sel.length >= 4) {
+          return { r1: Math.min(sel[0], sel[2]), c1: Math.min(sel[1], sel[3]), r2: Math.max(sel[0], sel[2]), c2: Math.max(sel[1], sel[3]) };
+        }
+      }
+      // Fallback for mouse/keyboard selections
+      if (this._hot.getSelected) {
+        const arr = this._hot.getSelected();
+        if (Array.isArray(arr) && arr.length) {
+          const last = arr[arr.length - 1];
+          if (Array.isArray(last) && last.length >= 4) {
+            return { r1: Math.min(last[0], last[2]), c1: Math.min(last[1], last[3]), r2: Math.max(last[0], last[2]), c2: Math.max(last[1], last[3]) };
+          }
+        }
+      }
+      return null;
     },
 
     _readBothHandRects() {
@@ -434,10 +449,13 @@
         }
 
         this._hot.render();
+        // Log success when merge actually happens
+        if (global.addToChatLog) global.addToChatLog("bot", "✅ Cells merged successfully.");
         return true;
       }
 
-      if (global.addToChatLog) global.addToChatLog("bot", "⚠️ Select a valid range (2/2+ cells) to merge.");
+      // Only show warning if no merge actually occurred
+      if (global.addToChatLog) global.addToChatLog("bot", "⚠️ Select a valid range (2+ cells) to merge.");
       return false;
     },
 

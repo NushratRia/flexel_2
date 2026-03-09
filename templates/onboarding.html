@@ -166,7 +166,7 @@
     <div class="grid">
       <!-- LEFT: Tasks -->
       <aside class="panel tasks" id="tasks">
-        <h2>Onboarding Tasks</h2>
+        <h2>Onboarding</h2>
         <p>We’ll auto-check these as you go.</p>
         <div id="taskList"></div>
         <div class="cta">
@@ -212,22 +212,27 @@
   const TASKS = [
     {id:'sel_g', label:'      Select using hand gesture'},
     /*{id:'sel_v', label:'      Select using voice'},*/
-  /* {id:'zoom_g', label:'     Zoom using hand gesture'},*/
-    {id:'zoom_v', label:'     Zoom using voice'},
+    /* {id:'zoom_g', label:'     Zoom using hand gesture'},*/
+    /*{id:'zoom_v', label:'     Zoom using voice'},
     /*{id:'del_g', label:'      Delete using hand gesture'},*/
     {id:'del_v', label:'    Delete using voice'},
+    {id:'rem_v', label:'    Alternative voice command: Remove using voice'},
+    /*{id:'del_c', label:'    Combination of gesture and voice: Delete this'},*/
     
   ];
-  const state = { sel_g:false, sel_v:false, zoom_v:false, del_v:false };
+  const state = { sel_g:false, sel_v:false, zoom_v:false, del_v:false, rem_v:false, del_c:false };
 
   const taskList = document.getElementById('taskList');
   function hintFor(id){
     if(id==='sel_g') return '     Pinch a shape.';
     if(id==='sel_v') return '     Say “flexee select”.';
     /*if(id==='zoom_g') return '      Thumb–middle spread to zoom in; close to zoom out.';*/
-    if(id==='zoom_v') return '      Say “flexee zoom in/out”.';
+    /*if(id==='zoom_v') return '      Say “flexee zoom in/out”.';*/
     /*if(id==='del_g') return '     Select & quickly flick down, or drag to 🗑️.';*/
     if(id==='del_v') return '     Say “flexee delete”.';
+    if(id==='rem_v') return '     Say “flexee remove”.';
+    /*if(id==='del_c') return '     Say “flexee delete this/remove this”.';*/
+    
     return '';
   }
   function renderTasks(){
@@ -326,7 +331,6 @@
     selected.style.transform = '';
     selected.removeAttribute('data-scale');
     notify('Deleted.');
-    mark('del_v');
   }
 
   /* ====== CAMERA + MEDIAPIPE HANDS ====== */
@@ -436,7 +440,7 @@
           mode = 'command';
           setVUI('command', 'Heard “flexee”. Listening 5s… e.g., "select … #N", "zoom … #N", "delete … #N"');
           clearTimeout(commandTimer);
-          commandTimer = setTimeout(()=>{ mode='hotword'; setVUI('hotword','Say “flexee …” then the command'); }, 5000);
+          commandTimer = setTimeout(()=>{ mode='hotword'; setVUI('hotword','Say “flexee …” then the command'); }, 8000);
         } else setVUI('hotword', 'Say “flexee …” then the command');
         return;
       }
@@ -445,7 +449,7 @@
         clearTimeout(commandTimer); lastExecTS = performance.now(); mode='hotword'; setVUI('hotword','Say “flexee …” then the command'); return;
       }
 
-      const m = text.match(/\b(select|zoom in|zoom out|delete|scroll (up|down|left|right))\b/);
+      const m = text.match(/\b(select|zoom in|zoom out|delete|remove|scroll (up|down|left|right))\b/);
       if (m) {
         clearTimeout(commandTimer); handleVoiceCommand(m[0]); lastExecTS = performance.now(); mode='hotword'; setVUI('hotword','Say “flexee …” then the command');
       }
@@ -478,8 +482,29 @@
   function handleSpecificCommand(text){
     if(!text) return false;
     text = text.replace(/^(?:hey|ok(?:ay)?)?\s*flexe?e?\s*/,'').trim();
+    
+    // Handle "delete this" / "delete thiss" / "here" / "there" (deictic: already selected)
+    if(text.match(/\b(delete|remove)\s+(this|thiss|here|there)\b/i)){
+      if(selected){ deleteSelected(false); mark('del_c'); return true; }
+      notify('No shape selected. Select one first.'); return true;
+    }
+
+    // Spoken numeric deletion: allow "delete hex 6" or "remove star number 3"
+    const mSpoken = text.match(/\b(delete|remove)\b\s+(.+?)\s+(?:number\s+)?(\d{1,4})\b/i);
+    if (mSpoken){
+      const op2 = mSpoken[1].toLowerCase();
+      const kind2 = mSpoken[2];
+      const num2 = parseInt(mSpoken[3], 10);
+      const s2 = findShapeByLabel(kind2, num2);
+      if(!s2){ notify(`Not found: ${kind2} #${num2}`); return true; }
+      selectShape(s2); mark('sel_v');
+      deleteSelected(false);
+      mark(op2 === 'remove' ? 'rem_v' : 'del_v');
+      return true;
+    }
+    
     let op, kind, num, dir = '';
-    let m = text.match(/\b(select|zoom|delete)\b\s+(.+?)\s*#\s*(\d{1,4})\b/i);
+    let m = text.match(/\b(select|zoom|delete|remove)\b\s+(.+?)\s*#\s*(\d{1,4})\b/i);
     if (m){ op=m[1].toLowerCase(); kind=m[2]; num=parseInt(m[3],10); if(op==='zoom'){ const d=m[0].match(/\b(in|out)\b/i); dir=d?d[1].toLowerCase():''; } }
     else { m = text.match(/\b(zoom)\s+(in|out)\s+(.+?)\s*#\s*(\d{1,4})\b/i); if(!m) return false; op='zoom'; dir=m[2].toLowerCase(); kind=m[3]; num=parseInt(m[4],10); }
 
@@ -495,7 +520,7 @@
       else{ scale=Math.min(2.0, base+0.15); applyScale(); mark('zoom_v'); notify(`Zoomed in ${kind} #${num}.`); showZoomCue('Zoom In'); }
       return true;
     }
-    if(op === 'delete'){ deleteSelected(false); return true; }
+    if(op === 'delete' || op === 'remove'){ deleteSelected(false); mark(op === 'remove' ? 'rem_v' : 'del_v'); return true; }
     return false;
   }
 
@@ -505,7 +530,13 @@
     if(text.startsWith('select')){ const s = arena.querySelector('.shape:not([data-deleted="true"])'); if(s){ selectShape(s); mark('sel_v'); notify('Selected by voice.'); } return; }
     if(text.includes('zoom in')){ if(selected){ scale=Math.min(2.0, scale+0.15); applyScale(); mark('zoom_v'); notify('Zoomed in.'); showZoomCue('Zoom In'); } return; }
     if(text.includes('zoom out')){ if(selected){ scale=Math.max(.5, scale-0.15); applyScale(); mark('zoom_v'); notify('Zoomed out.'); showZoomCue('Zoom Out'); } return; }
-    if(text.startsWith('delete')){ deleteSelected(false); return; }
+    // Combination-ish voice when user says "delete this" / "remove this" (or here/there)
+    if(text.includes('delete this') || text.includes('remove this') || text.includes('delete here') || text.includes('delete there') || text.includes('remove here') || text.includes('remove there')){
+      if(selected){ deleteSelected(false); mark('del_c'); } else { notify('No shape selected. Select one first.'); }
+      return;
+    }
+    if(text.startsWith('delete')){ deleteSelected(false); mark('del_v'); return; }
+    if(text.startsWith('remove')){ deleteSelected(false); mark('rem_v'); return; }
     if(text.startsWith('scroll')){
       const dir = text.includes('up') ? {top:-260,left:0} :
                   text.includes('left') ? {top:0,left:-260} :
