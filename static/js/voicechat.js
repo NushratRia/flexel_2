@@ -229,7 +229,7 @@
             const s = String(transcript).toLowerCase();
             if (!LOCAL_VERBS.test(s) || !DEIXIS.test(s)) return false;
             if (global.__maybeHandleLocalVoice && global.__maybeHandleLocalVoice(transcript)) {
-            if (announce) addToChatLog && addToChatLog("bot", "✅ Done (both hands).");
+            if (announce) addToChatLog && addToChatLog("bot", "✅ Done");
             return true;
             }
         } catch (e) {
